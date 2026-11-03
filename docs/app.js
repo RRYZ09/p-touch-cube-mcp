@@ -1,9 +1,9 @@
 import {
-  TAPE_PRINTABLE_PX, VERIFIED_TAPES_MM, MEDIA, buildJob, STATUS_REQUEST, parseStatus,
-} from './protocol.js?v=0.3.4';
-import { parseSettings, serializeSettings } from './settings.js?v=0.3.4';
-import { MODELS, canPrint } from './models.js?v=0.3.4';
-import { EN, JA_DYNAMIC } from './i18n.js?v=0.3.4';
+  TAPE_PRINTABLE_PX, VERIFIED_TAPES_MM, MEDIA, buildJob, STATUS_REQUEST, parseStatus, extractFrames, STATUS_COMPLETED, STATUS_ERROR,
+} from './protocol.js?v=0.3.5';
+import { parseSettings, serializeSettings } from './settings.js?v=0.3.5';
+import { MODELS, canPrint } from './models.js?v=0.3.5';
+import { EN, JA_DYNAMIC } from './i18n.js?v=0.3.5';
 
 const $ = (id) => document.getElementById(id);
 const SPP = '00001101-0000-1000-8000-00805f9b34fb';
@@ -549,6 +549,38 @@ async function readExactly(port, n, ms) {
   return Uint8Array.from(out);
 }
 
+const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
+// プリンタから届くステータス(32 バイト)を、背景で集めておく。waitFor で、条件に合うものを待つ
+function startStatusReader(port) {
+  const reader = port.readable.getReader();
+  let buf = [];
+  const frames = [];
+  let stop = false;
+  const loop = (async () => {
+    try {
+      while (!stop) {
+        const { value, done } = await reader.read();
+        if (done) break;
+        const r = extractFrames(buf.concat(Array.from(value)));
+        buf = Array.from(r.rest);
+        for (const f of r.frames) frames.push(parseStatus(f));
+      }
+    } catch { /* 閉じたとき */ }
+  })();
+  return {
+    async waitFor(pred, ms) {
+      const end = Date.now() + ms;
+      while (Date.now() < end) {
+        const i = frames.findIndex(pred);
+        if (i >= 0) return frames.splice(0, i + 1).pop();
+        await sleep(100);
+      }
+      return null;
+    },
+    async close() { stop = true; try { await reader.cancel(); } catch { /* */ } try { reader.releaseLock(); } catch { /* */ } await loop; },
+  };
+}
+
 async function writeAll(port, data) {
   const w = port.writable.getWriter();
   try {
@@ -590,8 +622,22 @@ $('btn-print').onclick = async () => {
     const job = buildJob(bitmap.bits, bitmap.width, bitmap.height, { tapeMm: mm, media: MEDIA[$('media').value] });
     await withPort(async (port) => {
       log(T('sending', { mm, copies }));
-      for (let i = 0; i < copies; i++) { await writeAll(port, job); await new Promise((r) => setTimeout(r, 200)); }
-      await new Promise((r) => setTimeout(r, 1200));
+      // 1 枚ごとに「印刷完了」の知らせを待ってから、次を送る(印刷中に次を送ると、プリンタがエラーになることがあるため)
+      const rd = startStatusReader(port);
+      const waitMs = 8000 + (bitmap.width / (180 / 25.4)) * 150;
+      try {
+        for (let i = 1; i <= copies; i++) {
+          await writeAll(port, job);
+          const fr = await rd.waitFor((f) => f.type === STATUS_COMPLETED || f.type === STATUS_ERROR || (f.type !== STATUS_COMPLETED && f.errorBits), waitMs);
+          if (fr && (fr.type === STATUS_ERROR || (fr.type !== STATUS_COMPLETED && fr.errorBits))) {
+            log(T('copy-error', { i, bits: fr.errorBits }));
+            return;
+          }
+          if (fr) log(T('copy-done', { i, n: copies }));
+          else { log(T('copy-notimer', { i, n: copies })); await sleep(2500); }
+          if (i < copies) await sleep(500);
+        }
+      } finally { await rd.close(); }
       log(T('sent'));
     });
   } catch (e) { log(T('failed', { msg: e.message || e })); } finally { busy(false); }

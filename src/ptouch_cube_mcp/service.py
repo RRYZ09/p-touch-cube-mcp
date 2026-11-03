@@ -37,7 +37,7 @@ def _finish(label: Image.Image, stem: str, *, copies: int, tape_mm: float, media
         return info
     job = protocol.build_job(label, tape_mm=tape_mm, media=MEDIA[media], cut=cut)
     info["printed"] = True
-    info["status"] = transport.send_job(job, copies=copies)
+    info["status"] = transport.send_job(job, copies=copies, wait_s=8 + length_mm * 0.15)
     return info
 
 

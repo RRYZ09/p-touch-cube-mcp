@@ -146,6 +146,7 @@ Images are processed on your machine and never uploaded. Only the fonts are fetc
 | `PTOUCH_ADDR` error | Set the variable. For MCP, pass it with `--env` in `claude mcp add` |
 | Cannot connect / "not available" | Is the printer on? Power-cycle it and retry |
 | Garbage status (a repeating pattern) | Wrong RFCOMM channel. Run `sdptool browse <address>`, find "SPP SERVER", and set `PTOUCH_CHANNEL` (it is 2 on the PT-P300BT) |
+| Error when printing 2 or more copies | The tool now waits for the printer's "finished" report after each label before sending the next one (v0.3.5). If it still fails, please report the "code" shown in the log in a [hardware report](https://github.com/RRYZ09/p-touch-cube-mcp/issues/new/choose) |
 | Printer stuck in an error state after printing | Pressing the power button once usually clears it (reported by other users) |
 | Japanese shows as boxes | No Japanese font found. Set `PTOUCH_FONT` to a font file |
 | Printer missing in the print page's list | Paired in the OS first? Using Chrome/Edge? Reload and retry |
@@ -158,6 +159,7 @@ Images are processed on your machine and never uploaded. Only the fonts are fetc
 | Pairing, connection (channel 2), status read (12 mm laminated) | Verified |
 | Printing Japanese text (12 mm laminated) | Verified |
 | Print page preview in Chrome (tape width, actual size, text + image, fonts) | Verified |
+| Printing 2 or more copies (waiting for "finished" after each) | **Not verified** (the flow is tested against a fake printer, in the browser and in Python) |
 | Printing text from the print page (12 mm) | Verified in Chrome (also byte-for-byte equal to the Python output, tested in CI) |
 | Printing JPEG/PNG | **Not verified** (dot math and preview are tested) |
 | Fabric tape / ribbon (`media=non_laminated`) | **Not verified** |
