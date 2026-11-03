@@ -1,13 +1,58 @@
 import {
-  TAPE_PRINTABLE_PX, VERIFIED_TAPES_MM, DOTS_PER_MM, MEDIA, buildJob, STATUS_REQUEST, parseStatus,
+  TAPE_PRINTABLE_PX, VERIFIED_TAPES_MM, MEDIA, buildJob, STATUS_REQUEST, parseStatus,
 } from './protocol.js';
+import { MODELS, canPrint } from './models.js';
+import { EN, JA_DYNAMIC } from './i18n.js';
 
 const $ = (id) => document.getElementById(id);
 const SPP = '00001101-0000-1000-8000-00805f9b34fb';
 const SIDE_PAD = 12;
-const PREVIEW_ONLY_PX = { 36: 200 }; // 36mm は印刷できないので、下見の目安の高さだけ
 let bitmap = null; // { bits, width, height, tapeMm }
 let imageEl = null;
+let lang = 'ja';
+const store = {
+  get(k) { try { return localStorage.getItem(k); } catch { return null; } },
+  set(k, v) { try { localStorage.setItem(k, v); } catch { /* 保存できなくても動く */ } },
+};
+
+// ---- 言語(日本語 / English)。日本語の文は index.html に書いてあり、英語は i18n.js
+const JA_STATIC = new Map();
+for (const el of document.querySelectorAll('[data-i18n],[data-i18n-html],[data-i18n-ph]')) {
+  JA_STATIC.set(el, { text: el.textContent, html: el.innerHTML, ph: el.getAttribute('placeholder') });
+}
+const T = (key, params = {}) => {
+  const str = (lang === 'en' ? EN[key] : JA_DYNAMIC[key]) ?? JA_DYNAMIC[key] ?? key;
+  return str.replace(/\{(\w+)\}/g, (_, k) => params[k] ?? '');
+};
+function applyLang() {
+  document.documentElement.lang = lang;
+  document.title = lang === 'en' ? 'P-TOUCH CUBE Label Maker' : 'P-TOUCH CUBE ラベルメーカー';
+  for (const [el, ja] of JA_STATIC) {
+    const key = el.dataset.i18n || el.dataset.i18nHtml;
+    if (el.dataset.i18nPh) el.setAttribute('placeholder', lang === 'en' ? EN[el.dataset.i18nPh] : ja.ph);
+    if (el.dataset.i18n) el.textContent = lang === 'en' ? EN[key] : ja.text;
+    else if (el.dataset.i18nHtml) el.innerHTML = lang === 'en' ? EN[key] : ja.html;
+  }
+  $('lang').textContent = lang === 'en' ? '日本語' : 'EN';
+  $('support').textContent = 'serial' in navigator ? '' : T('support-no');
+  $('preview').setAttribute('aria-label', lang === 'en' ? 'Label preview' : 'ラベルの下見');
+  buildFontOptions();
+  buildTapeOptions();
+  applyTheme();
+}
+function setLang(l) { lang = l; store.set('lang', l); applyLang(); render(); }
+
+// ---- テーマ(自動 / ライト / ダーク)
+let theme = 'auto';
+function applyTheme() {
+  const root = document.documentElement;
+  if (theme === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', theme);
+  const icon = { auto: '🌓', light: '☀️', dark: '🌙' }[theme];
+  $('theme').textContent = icon;
+  const label = T('theme-' + theme);
+  $('theme').title = label; $('theme').setAttribute('aria-label', label);
+}
+$('theme').onclick = () => { theme = { auto: 'light', light: 'dark', dark: 'auto' }[theme]; store.set('theme', theme); applyTheme(); };
 
 const logEl = $('log');
 const log = (m) => { logEl.textContent += (logEl.textContent ? '\n' : '') + m; logEl.scrollTop = logEl.scrollHeight; };
@@ -45,12 +90,35 @@ const FONTS = [
   { group: 'ふつうのフォント', label: 'ふつうのゴシック', css: "'Noto Sans JP','Noto Sans CJK JP','Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic','Meiryo'", normal: 400, bold: 700, generic: 'sans-serif' },
   { group: 'ふつうのフォント', label: 'ふつうの明朝', css: "'Noto Serif JP','Noto Serif CJK JP','Hiragino Mincho ProN','Yu Mincho','MS PMincho'", normal: 400, bold: 700, generic: 'serif' },
 ];
-{
+const FONT_EN = {
+  'Zen Maru Gothic': 'Zen Maru Gothic (round & cute)', 'Kiwi Maru': 'Kiwi Maru (gentle round)', 'Hachi Maru Pop': 'Hachi Maru Pop (pop)',
+  'Mochiy Pop One': 'Mochiy Pop One (chubby)', 'Potta One': 'Potta One (fat brush)', 'Yomogi': 'Yomogi (handwriting)',
+  'Yusei Magic': 'Yusei Magic (marker)', 'Klee One': 'Klee One (textbook hand)', 'Zen Kurenaido': 'Zen Kurenaido (pen hand)',
+  'RocknRoll One': 'RocknRoll One (bold round)', 'Dela Gothic One': 'Dela Gothic One (extra bold)', 'Kaisei Decol': 'Kaisei Decol (retro serif)',
+  'Fredoka': 'Fredoka (round & poppy)', 'Baloo 2': 'Baloo 2 (puffy)', 'Chewy': 'Chewy (toy-like)', 'Sniglet': 'Sniglet (soft round)',
+  'Bubblegum Sans': 'Bubblegum Sans (bubblegum)', 'Quicksand': 'Quicksand (gentle round)', 'Comfortaa': 'Comfortaa (perfect circles)',
+  'Pacifico': 'Pacifico (script)', 'Lobster': 'Lobster (bold script)', 'Caveat': 'Caveat (handwritten note)', 'Patrick Hand': 'Patrick Hand (hand)',
+  'Gochi Hand': 'Gochi Hand (doodle)', 'Noto Sans JP': 'Plain gothic', 'Noto Serif JP': 'Plain serif',
+};
+const GROUP_EN = { '日本語のかわいいフォント': 'Cute Japanese fonts', '英語のかわいいフォント(日本語は丸ゴシック)': 'Cute English fonts (Japanese in rounded gothic)', 'ふつうのフォント': 'Plain fonts' };
+function buildFontOptions() {
+  const sel = $('font');
+  const cur = sel.value || '0';
+  sel.textContent = '';
   const groups = new Map();
   FONTS.forEach((f, i) => {
-    if (!groups.has(f.group)) { const g = document.createElement('optgroup'); g.label = f.group; groups.set(f.group, g); $('font').append(g); }
-    const o = document.createElement('option'); o.value = i; o.textContent = f.label; groups.get(f.group).append(o);
+    if (!groups.has(f.group)) {
+      const g = document.createElement('optgroup');
+      g.label = lang === 'en' ? GROUP_EN[f.group] : f.group;
+      groups.set(f.group, g); sel.append(g);
+    }
+    const o = document.createElement('option');
+    o.value = i;
+    const key = f.css.split(',')[0].replace(/'/g, '');
+    o.textContent = lang === 'en' ? FONT_EN[key] : f.label;
+    groups.get(f.group).append(o);
   });
+  sel.value = cur;
 }
 const fontSpec = () => {
   const f = FONTS[parseInt($('font').value, 10)];
@@ -62,13 +130,29 @@ const fontSpec = () => {
 
 // ---- 対応ブラウザの確認
 if (!('serial' in navigator)) {
-  $('support').textContent = 'このブラウザでは印刷できません(下見だけ使えます)。パソコンの Chrome か Edge で開いてください。';
+  $('support').dataset.on = '1';
 }
 
 // ---- 設定の読み取り
+const model = () => $('model').value;
+const dotsPerMm = () => MODELS[model()].dpi / 25.4;
 const tapeMm = () => parseFloat($('tape').value);
+function buildTapeOptions() {
+  const sel = $('tape');
+  const cur = sel.value ? parseFloat(sel.value) : 12;
+  const tapes = MODELS[model()].tapes;
+  sel.textContent = '';
+  for (const mm of tapes) {
+    const o = document.createElement('option');
+    o.value = mm;
+    o.textContent = `${mm}mm` + (mm === 12 && model() === 'PT-P300BT' ? (lang === 'en' ? ' (verified)' : '(確認済み)') : '');
+    sel.append(o);
+  }
+  sel.value = tapes.includes(cur) ? String(cur) : '12';
+}
 const modeVal = () => document.querySelector('input[name=mode]:checked').value;
-const printablePxFor = (mm) => TAPE_PRINTABLE_PX[mm] ?? PREVIEW_ONLY_PX[mm] ?? 68;
+// 印刷できる機種は表の値。下見だけの機種(PT-P910BT など)は、テープ幅の約 85% を目安にする
+const printablePxFor = (mm) => (MODELS[model()].dpi === 180 && TAPE_PRINTABLE_PX[mm]) || Math.round(mm * 0.85 * dotsPerMm());
 
 function showPanels() {
   const m = modeVal();
@@ -78,12 +162,11 @@ function showPanels() {
 }
 
 function tapeNote() {
-  const mm = tapeMm();
-  let t;
-  if (mm === 36) t = '36mm は、このプリンタ(128 ドットのヘッド)では印刷できません。下見だけ使えます。';
-  else if (mm > 12) t = `${mm}mm は PT-P300BT では使えません(PT-P710BT など別機種向け)。印刷範囲は未確認です。`;
-  else if (!VERIFIED_TAPES_MM.includes(mm)) t = `${mm}mm の印刷範囲は、PT-P300BT の実機で未確認です(12mm のみ確認済み)。最初は 1 枚で試してください。`;
-  else t = '';
+  const mm = tapeMm(), m = model(), sup = MODELS[m].support;
+  let t = '';
+  if (sup === 'preview') t = T('note-preview', { model: m });
+  else if (sup === 'experimental') t = T('note-experimental', { model: m });
+  else if (!VERIFIED_TAPES_MM.includes(mm)) t = T('note-unverified', { mm });
   $('tape-note').textContent = t;
 }
 
@@ -199,10 +282,10 @@ async function render() {
   let hint = '';
   if (m === 'text') {
     const t = await textBitmap(P);
-    if (t) result = t; else hint = '文字を入れてください';
+    if (t) result = t; else hint = T('need-text');
   } else if (m === 'image') {
     const im = imageBitmap(P, 1);
-    if (im) result = compose([im], 0, P); else hint = '画像を選んでください';
+    if (im) result = compose([im], 0, P); else hint = T('need-image');
   } else {
     const t = await textBitmap(P);
     const im = imageBitmap(P, parseInt($('iconscale').value, 10) / 100);
@@ -212,14 +295,14 @@ async function render() {
     else if (t) parts.push(t);
     else if (im) parts.push(im);
     if (parts.length) result = compose(parts, parts.length > 1 ? gap : 0, P);
-    if (!im) hint = '画像を選ぶと、文字と並べます(いまは文字だけ)';
-    if (!t && !im) hint = '文字を入れるか、画像を選んでください';
+    if (!im) hint = T('text-only');
+    if (!t && !im) hint = T('need-either');
   }
   if (token !== renderToken) return; // 新しい入力が来たので捨てる
   drawPreview(result, mm, P);
   bitmap = result ? { ...result, tapeMm: mm } : null;
   $('meta').textContent = result
-    ? `テープ ${mm}mm ・ 長さ 約 ${(result.width / DOTS_PER_MM).toFixed(1)} mm ・ ${result.width}×${result.height} ドット${hint ? ' ・ ' + hint : ''}`
+    ? T('meta', { mm, len: (result.width / dotsPerMm()).toFixed(1), w: result.width, h: result.height, hint: hint ? ' · ' + hint : '' })
     : hint || '—';
 }
 
@@ -229,8 +312,8 @@ function drawPreview(res, mm, P) {
   const strip = $('tape-strip');
   const cv = $('preview');
   const padMm = 3;
-  const lenMm = res ? res.width / DOTS_PER_MM : 20;
-  const hMm = P / DOTS_PER_MM;
+  const lenMm = res ? res.width / dotsPerMm() : 20;
+  const hMm = P / dotsPerMm();
   const z = (v) => `${(v * zoom).toFixed(3)}mm`;
   strip.style.width = z(lenMm + padMm * 2);
   strip.style.height = z(mm);
@@ -241,8 +324,8 @@ function drawPreview(res, mm, P) {
   const S = 4; // 内部の解像度(くっきり見せるため)
   if (!res) { cv.width = 1; cv.height = 1; cv.style.width = '0'; cv.style.height = '0'; return; }
   cv.width = res.width * S; cv.height = res.height * S;
-  cv.style.width = z(res.width / DOTS_PER_MM);
-  cv.style.height = z(res.height / DOTS_PER_MM);
+  cv.style.width = z(res.width / dotsPerMm());
+  cv.style.height = z(res.height / dotsPerMm());
   const g = cv.getContext('2d');
   g.fillStyle = '#fff'; g.fillRect(0, 0, cv.width, cv.height);
   g.fillStyle = '#000';
@@ -251,17 +334,27 @@ function drawPreview(res, mm, P) {
 
 // ---- 入力のつなぎ
 for (const el of document.querySelectorAll('input[name=mode]')) el.addEventListener('change', () => { showPanels(); render(); });
+$('model').addEventListener('input', () => { buildTapeOptions(); setPrintEnabled(); render(); });
 for (const id of ['tape', 'text', 'font', 'bold', 'fsize', 'rotate', 'dither', 'invert', 'thresh', 'imgpos', 'iconscale', 'gap', 'zoom']) $(id).addEventListener('input', render);
 $('file').addEventListener('change', (e) => {
   const f = e.target.files[0];
   if (!f) return;
   const img = new Image();
   img.onload = () => { imageEl = img; render(); };
-  img.onerror = () => log('この画像は読み込めませんでした');
+  img.onerror = () => log(T('img-fail'));
   img.src = URL.createObjectURL(f);
 });
 if (document.fonts?.ready) document.fonts.ready.then(render);
+$('lang').onclick = () => setLang(lang === 'en' ? 'ja' : 'en');
+{
+  const q = new URLSearchParams(location.search).get('lang');
+  const saved = store.get('lang');
+  lang = q === 'en' || q === 'ja' ? q : saved || ((navigator.language || 'ja').startsWith('ja') ? 'ja' : 'en');
+  const st = store.get('theme');
+  if (st === 'light' || st === 'dark') theme = st;
+}
 showPanels();
+applyLang();
 render();
 
 // ---- プリンタ(Web Serial の Bluetooth シリアル)
@@ -299,36 +392,42 @@ async function writeAll(port, data) {
 }
 
 const hasSerial = 'serial' in navigator;
-const busy = (b) => { $('btn-print').disabled = b || !hasSerial; $('btn-status').disabled = b || !hasSerial; };
-busy(false);
+let working = false;
+const setPrintEnabled = () => {
+  $('btn-print').disabled = working || !hasSerial || !canPrint(model());
+  $('btn-status').disabled = working || !hasSerial;
+};
+const busy = (b) => { working = b; setPrintEnabled(); };
+setPrintEnabled();
 
 $('btn-status').onclick = async () => {
   busy(true);
   try {
     await withPort(async (port) => {
-      log('つないでいます…');
+      log(T('connecting'));
       const init = new Uint8Array(64 + 2 + STATUS_REQUEST.length);
       init.set([0x1b, 0x40], 64); init.set(STATUS_REQUEST, 66);
       await writeAll(port, init);
       const st = parseStatus(await readExactly(port, 32, 4000));
-      log(st.tapeMm ? `つながりました。テープ ${st.tapeMm}mm、${st.ok ? 'エラーなし' : 'エラーあり(' + st.errorBits + ')'}` : '返事がありませんでした(電源を入れ直して、もう一度)');
+      log(st.tapeMm ? T('connected', { mm: st.tapeMm, state: st.ok ? T('no-error') : T('has-error', { bits: st.errorBits }) }) : T('no-reply'));
     });
-  } catch (e) { log('失敗: ' + (e.message || e)); } finally { busy(false); }
+  } catch (e) { log(T('failed', { msg: e.message || e })); } finally { busy(false); }
 };
 
 $('btn-print').onclick = async () => {
-  if (!bitmap) { log('先にラベルを作ってください'); return; }
+  if (!bitmap) { log(T('make-first')); return; }
+  if (!canPrint(model())) { log(T('cannot-print', { what: model() })); return; }
   const mm = bitmap.tapeMm;
-  if (!(mm in TAPE_PRINTABLE_PX)) { log(`${mm}mm は、このプリンタでは印刷できません(下見のみ)`); return; }
+  if (!(mm in TAPE_PRINTABLE_PX)) { log(T('cannot-print', { what: mm + 'mm' })); return; }
   const copies = Math.min(20, Math.max(1, parseInt($('copies').value, 10) || 1));
   busy(true);
   try {
     const job = buildJob(bitmap.bits, bitmap.width, bitmap.height, { tapeMm: mm, media: MEDIA[$('media').value] });
     await withPort(async (port) => {
-      log(`${mm}mm のテープに ${copies} 枚を送っています…`);
+      log(T('sending', { mm, copies }));
       for (let i = 0; i < copies; i++) { await writeAll(port, job); await new Promise((r) => setTimeout(r, 200)); }
       await new Promise((r) => setTimeout(r, 1200));
-      log('送りました。テープが出てくるのを待ってください');
+      log(T('sent'));
     });
-  } catch (e) { log('失敗: ' + (e.message || e)); } finally { busy(false); }
+  } catch (e) { log(T('failed', { msg: e.message || e })); } finally { busy(false); }
 };
