@@ -1,0 +1,20 @@
+name: こうしてほしい / Feature request
+description: 新しい機能や、対応してほしい機種・OS の提案。 / Suggest a feature, model or OS.
+title: "[提案] "
+labels: ["enhancement"]
+body:
+  - type: textarea
+    id: want
+    attributes:
+      label: どんなことをしたいですか / What do you want to do
+    validations:
+      required: true
+  - type: textarea
+    id: why
+    attributes:
+      label: どんなときに困っていますか / Why it matters
+  - type: dropdown
+    id: help
+    attributes:
+      label: 手伝えますか / Can you help?
+      options: [実機で試せます / I can test on hardware, コードを書けます / I can write code, 提案だけです / Just the idea]

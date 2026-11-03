@@ -1,0 +1,42 @@
+name: 不具合 / Bug report
+description: 思ったように動かないところを教えてください。 / Something does not work as expected.
+title: "[不具合] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        まず README の「つまずいたとき」の表を見てもらえると、早く解決することがあります。
+        **プリンタの Bluetooth アドレスは、書かないでください**(公開の場所です)。
+  - type: textarea
+    id: what
+    attributes:
+      label: 何が起きましたか / What happened
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 本当はどうなってほしいですか / What you expected
+  - type: textarea
+    id: steps
+    attributes:
+      label: 再現のしかた / Steps to reproduce
+      placeholder: |
+        1. 印刷ページを開く
+        2. 機種 PT-P300BT、テープ 12mm を選ぶ
+        3. …
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: 機種・テープ・OS・ブラウザ(または Python の版) / Model, tape, OS, browser (or Python)
+      placeholder: "例: PT-P300BT / 12mm ラミネート / Ubuntu 24.04 / Chrome 130"
+    validations:
+      required: true
+  - type: textarea
+    id: log
+    attributes:
+      label: エラーの文章・ログ欄の内容 / Error text or the page's log
+      render: text

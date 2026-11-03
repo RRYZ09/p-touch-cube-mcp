@@ -1,8 +1,8 @@
 import {
   TAPE_PRINTABLE_PX, VERIFIED_TAPES_MM, MEDIA, buildJob, STATUS_REQUEST, parseStatus,
-} from './protocol.js?v=0.3.2';
-import { MODELS, canPrint } from './models.js?v=0.3.2';
-import { EN, JA_DYNAMIC } from './i18n.js?v=0.3.2';
+} from './protocol.js?v=0.3.3';
+import { MODELS, canPrint } from './models.js?v=0.3.3';
+import { EN, JA_DYNAMIC } from './i18n.js?v=0.3.3';
 
 const $ = (id) => document.getElementById(id);
 const SPP = '00001101-0000-1000-8000-00805f9b34fb';
@@ -135,7 +135,7 @@ const fontSpec = (idx = $('font').value) => {
 };
 
 // ---- 文字ごとのフォント(上級): 区切った文字それぞれにフォントを付けて、左から順につなぐ
-let segs = [{ text: 'まある', font: '0' }, { text: 'Maru', font: '12' }];
+let segs = [{ text: 'ラベル', font: '0' }, { text: 'Label', font: '12' }];
 function buildSegments() {
   const list = $('seg-list');
   list.textContent = '';
@@ -379,6 +379,7 @@ async function render() {
   if (token !== renderToken) return; // 新しい入力が来たので捨てる
   drawPreview(result, mm, P);
   bitmap = result ? { ...result, tapeMm: mm } : null;
+  $('btn-save').disabled = !result;
   $('meta').textContent = result
     ? T('meta', { mm, len: (result.width / dotsPerMm()).toFixed(1), w: result.width, h: result.height, hint: hint ? ' · ' + hint : '' })
     : hint || '—';
@@ -436,6 +437,28 @@ $('lang').onclick = () => setLang(lang === 'en' ? 'ja' : 'en');
 showPanels();
 applyLang();
 render();
+
+// ---- 画像として保存(ラベルのドットを 4 倍にした PNG。白地に黒)
+$('btn-save').onclick = () => {
+  if (!bitmap) { log(T('nothing-to-save')); return; }
+  const S = 4;
+  const c = document.createElement('canvas');
+  c.width = bitmap.width * S; c.height = bitmap.height * S;
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = '#000';
+  for (let y = 0; y < bitmap.height; y++) for (let x = 0; x < bitmap.width; x++) if (bitmap.bits[y * bitmap.width + x]) g.fillRect(x * S, y * S, S, S);
+  const d = new Date(), p2 = (n) => String(n).padStart(2, '0');
+  const name = `p-touch-label-${bitmap.tapeMm}mm-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.png`;
+  c.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    log(T('saved', { name }));
+  }, 'image/png');
+};
 
 // ---- プリンタ(Web Serial の Bluetooth シリアル)
 async function pickPort() {

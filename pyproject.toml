@@ -1,6 +1,6 @@
 [project]
 name = "p-touch-cube-mcp"
-version = "0.3.2"
+version = "0.3.3"
 description = "Brother P-touch CUBE (PT-P300BT) にラベルを印刷する MCP サーバー(Bluetooth SPP 直送)"
 readme = "README.md"
 requires-python = ">=3.10"

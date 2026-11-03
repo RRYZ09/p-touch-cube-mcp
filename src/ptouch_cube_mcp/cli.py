@@ -1,4 +1,4 @@
-"""コマンドラインから試す: p-touch-cube text 'まある' --dry-run"""
+"""コマンドラインから試す: p-touch-cube text 'ラベル' --dry-run"""
 from __future__ import annotations
 
 import argparse
@@ -25,7 +25,7 @@ def main() -> None:
     t.add_argument("--font-size", type=int)
     t.add_argument("--font", help="フォントファイルのパス(かわいいフォントなど)")
     t.add_argument("--latin-font", help="半角の英数字・記号だけのフォント(日本語と英語を混ぜるとき)")
-    t.add_argument("--segment", action="append", metavar="TEXT=FONT", help="文字ごとのフォント(くり返せる)。例: --segment まある=a.ttf --segment Maru=b.ttf")
+    t.add_argument("--segment", action="append", metavar="TEXT=FONT", help="文字ごとのフォント(くり返せる)。例: --segment ラベル=a.ttf --segment Label=b.ttf")
     t.add_argument("--image", help="文字と一緒に印刷する画像(JPEG・PNG)")
     t.add_argument("--image-position", choices=["left", "right", "both", "between"], default="left",
                    help="left=画像→文字 / right=文字→画像 / both=画像で文字を挟む / between=文字で画像を挟む")

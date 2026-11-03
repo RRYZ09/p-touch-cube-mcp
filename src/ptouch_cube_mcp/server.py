@@ -24,7 +24,7 @@ def print_label_text(text: str, copies: int = 1, font_size: int | None = None, t
     icon_scale: 画像の大きさ 0.2〜1。
     font_path: 好きなフォントファイル(かわいいフォントなど)。
     latin_font_path: 半角の英数字・記号だけ別のフォントにする(日本語と英語を混ぜるとき)。
-    segments: 文字ごとにフォントを選ぶ。[{"text": "まある", "font_path": "/…/a.ttf"}, {"text": "Maru", "font_path": "/…/b.ttf"}] を左から順につなぐ(1 行。text は無視される)。
+    segments: 文字ごとにフォントを選ぶ。[{"text": "ラベル", "font_path": "/…/a.ttf"}, {"text": "Label", "font_path": "/…/b.ttf"}] を左から順につなぐ(1 行。text は無視される)。
     """
     return service.print_text(text, copies=copies, font_size=font_size, tape_mm=tape_mm, media=media,
                               dry_run=dry_run, font_path=font_path, image_path=image_path,
