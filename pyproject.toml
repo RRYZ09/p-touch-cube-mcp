@@ -1,0 +1,24 @@
+[project]
+name = "p-touch-cube-mcp"
+version = "0.1.0"
+description = "Brother P-touch CUBE (PT-P300BT) にラベルを印刷する MCP サーバー(Bluetooth SPP 直送)"
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = [
+    "mcp>=1.2.0",
+    "pillow>=10.0",
+]
+
+[project.scripts]
+p-touch-cube-mcp = "ptouch_cube_mcp.server:main"
+p-touch-cube = "ptouch_cube_mcp.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[dependency-groups]
+dev = ["pytest>=8"]
