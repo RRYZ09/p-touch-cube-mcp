@@ -18,10 +18,26 @@ Claude: (下見の画像を作る) こんな見た目です。刷りますか?
 Claude: (プリンタに送る) 1 枚印刷しました。
 ```
 
+<p align="center">
+  <img src="images/p-touch-cube1.jpg" alt="P-touch CUBE(PT-P300BT)と、このツールで印刷した、似顔絵と文字のラベル" width="640">
+</p>
+
+<p align="center">
+  <em>PT-P300BT で、画像と文字を並べて印刷したラベル(12mm のラミネートテープ)</em>
+</p>
+
 公式アプリ([P-touch Design&Print](https://www.brother.co.jp/product/labelwriter/special/cube/about/index.aspx))を使わず、パソコンから直接つなぎます。
 アプリには「文字 1 つ・アイコン 3 つまで」などの制限がありますが、ここでは好きな文字や、JPEG の画像もラベルにできます。
 
 **非公式の使い方です。** Brother の公式サポートの範囲外なので、自己責任でお使いください。
+
+### 印刷ページの画面
+
+<p align="center">
+  <img src="images/p-touch-cube2.png" alt="P-TOUCH CUBE ラベルメーカーの画面。文字と画像を並べた、実寸の下見が出ている" width="420">
+</p>
+
+画像と文字を並べて、テープの実寸で下見を見ながら印刷できます。
 
 ## 使い方は 2 つ
 

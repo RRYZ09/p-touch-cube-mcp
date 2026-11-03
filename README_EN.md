@@ -17,9 +17,25 @@ You:    Print.
 Claude: (sends it to the printer) Printed 1 label.
 ```
 
+<p align="center">
+  <img src="images/p-touch-cube1.jpg" alt="A Brother P-touch CUBE (PT-P300BT) with labels printed by this tool: a portrait and text" width="640">
+</p>
+
+<p align="center">
+  <em>Labels printed on a PT-P300BT with an image and text side by side (12 mm laminated tape)</em>
+</p>
+
 It does not need the official app. The official app limits a label to one text object and three icons. Here you can print any text (Japanese included) and JPEG/PNG images.
 
 **This is unofficial and unsupported by Brother. Use it at your own risk.**
+
+### The print page
+
+<p align="center">
+  <img src="images/p-touch-cube2.png" alt="The P-TOUCH CUBE Label Maker page, showing an actual-size preview of an image and text" width="420">
+</p>
+
+Put an image and text side by side and watch the actual-size preview before you print.
 
 ## Two ways to use it
 
