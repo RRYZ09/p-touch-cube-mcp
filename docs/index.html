@@ -5,6 +5,9 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>P-touch CUBE ラベルを作って印刷</title>
 <meta name="description" content="Brother P-touch CUBE (PT-P300BT) に、ブラウザから直接ラベルを印刷します。">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=Kiwi+Maru:wght@400;500&family=Hachi+Maru+Pop&family=Yomogi&family=Mochiy+Pop+One&family=Potta+One&family=Dela+Gothic+One&family=RocknRoll+One&family=Yusei+Magic&family=Klee+One:wght@400;600&family=Kaisei+Decol:wght@400;700&family=Zen+Kurenaido&family=Fredoka:wght@400;600&family=Baloo+2:wght@400;700&family=Chewy&family=Pacifico&family=Caveat:wght@400;700&family=Patrick+Hand&family=Sniglet:wght@400;800&family=Bubblegum+Sans&family=Gochi+Hand&family=Lobster&family=Quicksand:wght@400;700&family=Comfortaa:wght@400;700&display=swap">
 <link rel="stylesheet" href="style.css">
 </head>
 <body>
@@ -17,31 +20,45 @@
 
   <section aria-labelledby="h-make">
     <h2 id="h-make">1. ラベルを作る</h2>
-    <div class="tabs" role="tablist">
-      <button role="tab" id="tab-text" aria-selected="true" aria-controls="panel-text">文字</button>
-      <button role="tab" id="tab-image" aria-selected="false" aria-controls="panel-image">画像(JPEG・PNG)</button>
-    </div>
 
-    <div id="panel-text" role="tabpanel" aria-labelledby="tab-text">
-      <label for="text">文字(改行で複数行。12mm テープは 1 行がおすすめ)</label>
+    <div class="row">
+      <label>テープの幅
+        <select id="tape">
+          <option value="3.5">3.5mm</option>
+          <option value="6">6mm</option>
+          <option value="9">9mm</option>
+          <option value="12" selected>12mm(確認済み)</option>
+          <option value="18">18mm(別機種向け)</option>
+          <option value="24">24mm(別機種向け)</option>
+          <option value="36">36mm(印刷不可・下見のみ)</option>
+        </select>
+      </label>
+    </div>
+    <p class="hint" id="tape-note"></p>
+
+    <fieldset class="modes">
+      <legend>内容</legend>
+      <label><input type="radio" name="mode" value="text" checked> 文字</label>
+      <label><input type="radio" name="mode" value="image"> 画像(JPEG・PNG)</label>
+      <label><input type="radio" name="mode" value="combo"> 文字 + 画像</label>
+    </fieldset>
+
+    <div id="panel-text">
+      <label for="text">文字(改行で複数行。細いテープは 1 行がおすすめ)</label>
       <textarea id="text" rows="2" placeholder="まある">まある</textarea>
       <div class="row">
         <label>フォント
-          <select id="font">
-            <option value="'Noto Sans JP','Noto Sans CJK JP','Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic','Meiryo',sans-serif">ゴシック</option>
-            <option value="'Noto Serif JP','Noto Serif CJK JP','Hiragino Mincho ProN','Yu Mincho','MS PMincho',serif">明朝</option>
-            <option value="'Zen Maru Gothic','Hiragino Maru Gothic ProN','Yu Gothic',sans-serif">丸ゴシック(あれば)</option>
-            <option value="monospace">等幅</option>
-          </select>
+          <select id="font"></select>
         </label>
         <label><input type="checkbox" id="bold" checked> 太字</label>
         <label>文字の大きさ
-          <input type="number" id="fsize" min="8" max="68" placeholder="自動">
+          <input type="number" id="fsize" min="6" max="200" placeholder="自動">
         </label>
       </div>
+      <p class="hint" id="font-note">かわいいフォントは Google Fonts から読み込みます。英語のフォントは、日本語の文字だけ丸ゴシックで補います(フォントのファイルを取るだけで、ラベルの文字そのものは送られません)。読み込めないときは、ふつうのフォントで表示されます。</p>
     </div>
 
-    <div id="panel-image" role="tabpanel" aria-labelledby="tab-image" hidden>
+    <div id="panel-image" hidden>
       <label for="file">画像ファイル(印刷は白黒になります)</label>
       <input type="file" id="file" accept="image/jpeg,image/png,image/*">
       <div class="row">
@@ -50,22 +67,42 @@
         </label>
         <label><input type="checkbox" id="dither" checked> 写真向け(ディザ)</label>
         <label><input type="checkbox" id="invert"> 白黒を反転</label>
-        <label>しきい値
+        <label>しきい値(ディザなしのとき)
           <input type="range" id="thresh" min="40" max="220" value="140">
         </label>
       </div>
     </div>
 
-    <h3>仕上がりの下見</h3>
-    <div class="preview"><canvas id="preview" width="10" height="10" aria-label="ラベルの下見"></canvas></div>
+    <div id="panel-combo" hidden>
+      <div class="row">
+        <label>画像の位置
+          <select id="imgpos"><option value="left">文字の左</option><option value="right">文字の右</option></select>
+        </label>
+        <label>画像の大きさ
+          <input type="range" id="iconscale" min="20" max="100" value="100">
+        </label>
+        <label>すきま
+          <input type="number" id="gap" min="0" max="60" value="10">
+        </label>
+      </div>
+    </div>
+
+    <h3>仕上がりの下見(実寸)</h3>
+    <div class="row">
+      <label>表示の大きさ
+        <select id="zoom"><option value="1">実寸</option><option value="2">2 倍</option><option value="3">3 倍</option></select>
+      </label>
+    </div>
+    <div class="preview"><div class="tape" id="tape-strip"><canvas id="preview" aria-label="ラベルの下見"></canvas></div></div>
     <p class="meta" id="meta">—</p>
+    <p class="hint">実寸は、画面の設定によって、少しずれることがあります。点線の内側が、印刷される範囲です。</p>
   </section>
 
   <section aria-labelledby="h-print">
     <h2 id="h-print">2. 印刷する</h2>
     <div class="row">
       <label>枚数 <input type="number" id="copies" min="1" max="20" value="1"></label>
-      <label>テープ
+      <label>テープの種類
         <select id="media"><option value="laminated">ラミネート(白・透明など)</option><option value="non_laminated">布・リボンなど(未確認)</option></select>
       </label>
     </div>

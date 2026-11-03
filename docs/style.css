@@ -31,3 +31,12 @@ ol{padding-left:1.3em}
 code{background:var(--bg);padding:0 .3em;border-radius:4px}
 footer{text-align:center;color:var(--mute);font-size:.88rem;margin-top:24px}
 a{color:var(--accent)}
+
+fieldset.modes{border:1px solid var(--line);border-radius:10px;margin:14px 0 8px;padding:6px 14px 10px;display:flex;flex-wrap:wrap;gap:4px 18px}
+fieldset.modes legend{color:var(--mute);font-size:.9rem;padding:0 6px}
+fieldset.modes label{display:inline-flex;gap:6px;align-items:center;margin:4px 0;color:var(--ink)}
+.preview{overflow:auto;background:repeating-linear-gradient(45deg,var(--bg),var(--bg) 8px,var(--card) 8px,var(--card) 16px);border:1px solid var(--line);border-radius:8px;padding:14px}
+.tape{position:relative;background:#fff;border:1px solid #bbb;box-shadow:0 1px 3px rgba(0,0,0,.25);display:block;width:max-content}
+.tape::after{content:"";position:absolute;left:0;right:0;border-top:1px dashed #d46;border-bottom:1px dashed #d46;top:var(--g-top);height:var(--g-h);pointer-events:none}
+.tape canvas{position:absolute;left:var(--pad-x);top:var(--c-top)}
+legend{font-weight:600}
