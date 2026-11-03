@@ -145,3 +145,20 @@ def test_theme_defaults_to_light_in_docs():
     from pathlib import Path
     html = (Path(__file__).resolve().parents[1] / "docs" / "index.html").read_text()
     assert "var t = 'light'" in html and "prefers-color-scheme" not in (Path(__file__).resolve().parents[1] / "docs" / "style.css").read_text()
+
+
+def test_settings_export_import_validation():
+    """docs/settings.js(設定の書き出し・読み込み)の検証を、Node で確かめる。"""
+    import shutil
+    import subprocess
+    from pathlib import Path
+
+    import pytest
+
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node が無い")
+    script = Path(__file__).resolve().parents[1] / "web_tests" / "settings.mjs"
+    out = subprocess.run([node, str(script)], capture_output=True, text=True)
+    assert out.returncode == 0, out.stderr
+    assert "settings ok" in out.stdout

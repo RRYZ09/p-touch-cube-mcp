@@ -127,6 +127,7 @@ Edit text or load an image, watch the preview, and print.
 - **Pick the printer model** (PT-P300BT / PT-P320BT / PT-P710BT / PT-P910BT). It starts on the PT-P300BT with 12 mm tape. **Everything else is marked "(unverified)" in the lists.** The PT-P710BT is experimental; the PT-P320BT and PT-P910BT are preview only. The available tape widths follow the model.
 - **Japanese / English and light / dark** from the buttons at the top right (it starts in light mode; `?lang=ja` / `?lang=en` in the URL picks the language).
 - **Pick the tape width** (3.5 / 6 / 9 / 12 / 18 / 24 / 36 mm). The preview shows that tape at **actual size**; the dashed lines mark the printable area.
+- **Export / import settings** ("Export settings (JSON)" / "Import settings"). Save the model, tape, text, fonts, layout and so on to a file and rebuild the same label later, or on another computer. The image is included only when "Include the image" is on.
 - **Save as an image** ("Save as image (PNG)": a black-on-white PNG at 4× the label dots).
 - **Text, image, or text + image.** Text + image has four layouts: "image → text", "text → image", "image → text → image" (image on both sides) and "text → image → text" (image between two texts), with size and gap controls.
 - **Cute fonts**: 12 Japanese and 12 English (Latin) ones. English fonts fall back to a rounded gothic for Japanese characters, so mixed text works.
