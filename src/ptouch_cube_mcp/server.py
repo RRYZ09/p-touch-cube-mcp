@@ -12,7 +12,8 @@ mcp = FastMCP("p-touch-cube")
 def print_label_text(text: str, copies: int = 1, font_size: int | None = None, tape_mm: float = 12,
                      media: str = "laminated", dry_run: bool = False, font_path: str | None = None,
                      image_path: str | None = None, image_position: str = "left", icon_scale: float = 1.0,
-                     text_after: str | None = None) -> dict:
+                     text_after: str | None = None, latin_font_path: str | None = None,
+                     segments: list[dict] | None = None) -> dict:
     """文字(と、あれば画像)をラベルにして印刷する(PT-P300BT)。改行で複数行(12mm テープは 1 行がおすすめ)。
 
     dry_run=true なら印刷せず、仕上がりの PNG だけ作る(最初は必ずこれで見る)。
@@ -22,10 +23,13 @@ def print_label_text(text: str, copies: int = 1, font_size: int | None = None, t
     both(画像→文字→画像。画像で文字を挟む)/ between(文字→画像→文字。文字で画像を挟む。後ろの文字は text_after)。
     icon_scale: 画像の大きさ 0.2〜1。
     font_path: 好きなフォントファイル(かわいいフォントなど)。
+    latin_font_path: 半角の英数字・記号だけ別のフォントにする(日本語と英語を混ぜるとき)。
+    segments: 文字ごとにフォントを選ぶ。[{"text": "まある", "font_path": "/…/a.ttf"}, {"text": "Maru", "font_path": "/…/b.ttf"}] を左から順につなぐ(1 行。text は無視される)。
     """
     return service.print_text(text, copies=copies, font_size=font_size, tape_mm=tape_mm, media=media,
                               dry_run=dry_run, font_path=font_path, image_path=image_path,
-                              image_position=image_position, icon_scale=icon_scale, text_after=text_after)
+                              image_position=image_position, icon_scale=icon_scale, text_after=text_after,
+                              latin_font_path=latin_font_path, segments=segments)
 
 
 @mcp.tool()

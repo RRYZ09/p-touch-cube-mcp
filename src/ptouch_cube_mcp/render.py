@@ -25,31 +25,85 @@ def find_font(path: str | None = None, size: int = 56) -> ImageFont.FreeTypeFont
     raise RuntimeError("日本語フォントが見つかりません。PTOUCH_FONT にフォントのパスを指定してください")
 
 
-def text_label(text: str, *, font_size: int | None = None, font_path: str | None = None,
-               tape_mm: float = 12) -> Image.Image:
-    """テキスト(改行で複数行)を、テープ幅に収まる白黒ラベルにする。
+def _is_latin(ch: str) -> bool:
+    return " " <= ch <= "~"
 
+
+def split_runs(line: str, font_path: str | None, latin_font_path: str | None) -> list[tuple[str, str | None]]:
+    """1 行を、(文字, フォントのパス)の断片に分ける。半角の英数字・記号は latin_font_path、ほかは font_path。"""
+    if not latin_font_path or latin_font_path == font_path:
+        return [(line, font_path)]
+    runs: list[tuple[str, str | None]] = []
+    for ch in line:
+        fp = latin_font_path if _is_latin(ch) else font_path
+        if runs and runs[-1][1] == fp:
+            runs[-1] = (runs[-1][0] + ch, fp)
+        else:
+            runs.append((ch, fp))
+    return runs
+
+
+def runs_label(lines: list[list[tuple[str, str | None]]], *, font_size: int | None = None,
+               tape_mm: float = 12) -> Image.Image:
+    """断片(文字, フォント)の行のリストを、テープ幅に収まる白黒ラベルにする。
+
+    断片ごとにフォントを変えられる。行ごとに、一番大きいフォントの上端にベースラインをそろえる。
     font_size を省略すると、行数に合わせて高さいっぱいに自動で決める。
     """
     limit = printable_px(tape_mm)
-    lines = text.split("\n")
     n = len(lines)
+    cache: dict[tuple[str | None, int], ImageFont.FreeTypeFont] = {}
+
+    def font(path: str | None, size: int) -> ImageFont.FreeTypeFont:
+        if (path, size) not in cache:
+            cache[(path, size)] = find_font(path, size)
+        return cache[(path, size)]
+
+    def metrics(size: int) -> list[tuple[int, int]]:
+        out = []
+        for line in lines:
+            runs = line or [("", None)]
+            asc = max(font(fp, size).getmetrics()[0] for _, fp in runs)
+            desc = max(font(fp, size).getmetrics()[1] for _, fp in runs)
+            out.append((asc, asc + desc))
+        return out
+
     size = font_size or max(8, int(limit / n * 0.9))
-    while True:
-        font = find_font(font_path, size)
-        asc, desc = font.getmetrics()
-        line_h = asc + desc
-        if font_size or line_h * n <= limit or size <= 8:
-            break
+    ms = metrics(size)
+    while not font_size and sum(m[1] for m in ms) > limit and size > 8:
         size -= 2
-    widths = [font.getlength(l) for l in lines]
+        ms = metrics(size)
+    widths = [sum(font(fp, size).getlength(t) for t, fp in (line or [("", None)])) for line in lines]
     w = int(max(widths)) + SIDE_PAD * 2
-    h = min(limit, line_h * n)
+    h = min(limit, sum(m[1] for m in ms))
     img = Image.new("L", (w, h), 255)
     d = ImageDraw.Draw(img)
-    for i, l in enumerate(lines):
-        d.text((SIDE_PAD, i * line_h), l, font=font, fill=0)
+    y = 0
+    for (asc, line_h), line in zip(ms, lines):
+        x = float(SIDE_PAD)
+        for t, fp in line:
+            d.text((x, y + asc), t, font=font(fp, size), fill=0, anchor="ls")
+            x += font(fp, size).getlength(t)
+        y += line_h
     return img.point(lambda v: 0 if v < 140 else 255, mode="1").convert("L")
+
+
+def text_label(text: str, *, font_size: int | None = None, font_path: str | None = None,
+               tape_mm: float = 12, latin_font_path: str | None = None) -> Image.Image:
+    """テキスト(改行で複数行)を、テープ幅に収まる白黒ラベルにする。
+
+    latin_font_path を渡すと、半角の英数字・記号だけ別のフォントにする(日本語と英語を混ぜるとき)。
+    """
+    lines = [split_runs(l, font_path, latin_font_path) for l in text.split("\n")]
+    return runs_label(lines, font_size=font_size, tape_mm=tape_mm)
+
+
+def segments_label(segments: list[dict], *, font_size: int | None = None, tape_mm: float = 12) -> Image.Image:
+    """文字ごとにフォントを選んで、左から順につなぐ(1 行)。segments は [{"text": "...", "font_path": "..."}]。"""
+    runs = [(sg["text"], sg.get("font_path")) for sg in segments if sg.get("text")]
+    if not runs:
+        raise ValueError("segments に文字がありません")
+    return runs_label([runs], font_size=font_size, tape_mm=tape_mm)
 
 
 def image_label(path: str, *, rotate: int = 0, dither: bool = True, invert: bool = False,
@@ -83,7 +137,8 @@ COMBO_LAYOUTS = ("left", "right", "both", "between")
 def combo_label(text: str, image_path: str, *, image_position: str = "left", gap: int = 10,
                 font_size: int | None = None, font_path: str | None = None, rotate: int = 0,
                 dither: bool = True, invert: bool = False, icon_scale: float = 1.0,
-                tape_mm: float = 12, text_after: str | None = None) -> Image.Image:
+                tape_mm: float = 12, text_after: str | None = None,
+                latin_font_path: str | None = None, segments: list[dict] | None = None) -> Image.Image:
     """画像と文字を横に並べたラベル。
 
     image_position:
@@ -95,10 +150,13 @@ def combo_label(text: str, image_path: str, *, image_position: str = "left", gap
     if image_position not in COMBO_LAYOUTS:
         raise ValueError(f"image_position は {list(COMBO_LAYOUTS)} のどれか")
     limit = printable_px(tape_mm)
-    t = text_label(text, font_size=font_size, font_path=font_path, tape_mm=tape_mm)
+    t = (segments_label(segments, font_size=font_size, tape_mm=tape_mm) if segments else
+         text_label(text, font_size=font_size, font_path=font_path, tape_mm=tape_mm,
+                    latin_font_path=latin_font_path))
     im = image_label(image_path, rotate=rotate, dither=dither, invert=invert, tape_mm=tape_mm,
                      scale=icon_scale, pad=False)
-    t2 = (text_label(text_after, font_size=font_size, font_path=font_path, tape_mm=tape_mm)
+    t2 = (text_label(text_after, font_size=font_size, font_path=font_path, tape_mm=tape_mm,
+                     latin_font_path=latin_font_path)
           if image_position == "between" and text_after and text_after.strip() else None)
     parts = {"left": [im, t], "right": [t, im], "both": [im, t, im],
              "between": [t, im] + ([t2] if t2 else [])}[image_position]

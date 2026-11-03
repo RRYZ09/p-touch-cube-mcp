@@ -24,6 +24,8 @@ def main() -> None:
         p.add_argument("--tape-mm", type=float, default=12, help="3.5 / 6 / 9 / 12 / 18 / 24")
     t.add_argument("--font-size", type=int)
     t.add_argument("--font", help="フォントファイルのパス(かわいいフォントなど)")
+    t.add_argument("--latin-font", help="半角の英数字・記号だけのフォント(日本語と英語を混ぜるとき)")
+    t.add_argument("--segment", action="append", metavar="TEXT=FONT", help="文字ごとのフォント(くり返せる)。例: --segment まある=a.ttf --segment Maru=b.ttf")
     t.add_argument("--image", help="文字と一緒に印刷する画像(JPEG・PNG)")
     t.add_argument("--image-position", choices=["left", "right", "both", "between"], default="left",
                    help="left=画像→文字 / right=文字→画像 / both=画像で文字を挟む / between=文字で画像を挟む")
@@ -32,9 +34,13 @@ def main() -> None:
     sub.add_parser("status")
     a = ap.parse_args()
     if a.cmd == "text":
+        segs = None
+        if a.segment:
+            segs = [dict(zip(("text", "font_path"), x.rsplit("=", 1))) for x in a.segment]
         r = service.print_text(a.text, copies=a.copies, font_size=a.font_size, media=a.media, dry_run=a.dry_run,
                                tape_mm=a.tape_mm, font_path=a.font, image_path=a.image,
-                               image_position=a.image_position, icon_scale=a.icon_scale, text_after=a.text_after)
+                               image_position=a.image_position, icon_scale=a.icon_scale, text_after=a.text_after,
+                               latin_font_path=a.latin_font, segments=segs)
     elif a.cmd == "image":
         r = service.print_image(a.path, copies=a.copies, rotate=a.rotate, dither=not a.no_dither,
                                 invert=a.invert, media=a.media, dry_run=a.dry_run, tape_mm=a.tape_mm)
