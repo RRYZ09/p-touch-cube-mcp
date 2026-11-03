@@ -22,6 +22,7 @@ export const EN = {
   'fsize-ph': 'auto',
   'font-note': 'Cute fonts load from Google Fonts. English fonts use a rounded gothic for Japanese characters. Only font files are fetched; your label text is not sent. If a font cannot load, a plain font is shown.',
   'image-label': 'Image file (printed in black and white)',
+  'btn-save': 'Save as image (PNG)',
   'rotate': 'Rotate',
   'rot0': 'None', 'rot90': '90° right', 'rot180': '180°', 'rot270': '90° left',
   'dither': 'Photo mode (dithering)',
@@ -61,6 +62,7 @@ export const EN = {
   'note-unverified': 'The printable area for {mm}mm is not verified on a real PT-P300BT (only 12mm is). Try one label first.',
   'note-18': '{mm}mm is for other models (such as the PT-P710BT), not the PT-P300BT.',
   'unverified': 'unverified', 'verified': 'verified',
+  'saved': 'Saved {name}', 'nothing-to-save': 'Make a label first',
   'need-text': 'Enter some text', 'need-image': 'Choose an image', 'need-either': 'Enter text or choose an image',
   'text-only': 'Choose an image to put beside the text (text only for now)',
   'meta': 'Tape {mm}mm · length about {len} mm · {w}×{h} dots{hint}',
@@ -77,6 +79,7 @@ export const EN = {
 };
 export const JA_DYNAMIC = {
   'unverified': '未検証', 'verified': '確認済み',
+  'saved': '{name} として保存しました', 'nothing-to-save': '先にラベルを作ってください',
   'to-dark': 'ダークモードにする', 'to-light': 'ライトモードにする',
   'font-same': '日本語と同じ', 'seg-ph': '文字',
   'support-no': 'このブラウザでは印刷できません(下見だけ使えます)。パソコンの Chrome か Edge で開いてください。',

@@ -12,7 +12,7 @@
 ブラウザで編集して印刷できる[**「P-TOUCH CUBE ラベルメーカー」**](https://rryz09.github.io/p-touch-cube-mcp/)(日本語・English、ライト・ダーク対応)もあります。
 
 ```
-あなた: 「まある」って名前のラベルを作って。まず下見だけ見せて。
+あなた: 「おみやげ」って書いたラベルを作って。まず下見だけ見せて。
 Claude: (下見の画像を作る) こんな見た目です。刷りますか?
 あなた: 刷って。
 Claude: (プリンタに送る) 1 枚印刷しました。
@@ -86,12 +86,12 @@ uv run p-touch-cube status
 ### 4. まず下見、次に印刷
 
 ```sh
-uv run p-touch-cube text "まある" --dry-run   # out/ に仕上がりの PNG ができる(テープは使わない)
-uv run p-touch-cube text "まある"             # 印刷
-uv run p-touch-cube text "まある" --tape-mm 9 --image heart.png --dry-run   # 9mm テープ、ハート+文字
-uv run p-touch-cube text "Maru" --font ~/.fonts/Fredoka.ttf --dry-run     # 好きなフォントで
-uv run p-touch-cube text "Maru まある" --font ja.ttf --latin-font en.ttf --dry-run   # 日本語と英数字で別のフォント
-uv run p-touch-cube text x --segment "まある=ja.ttf" --segment "Maru=en.ttf" --dry-run   # 文字ごとのフォント
+uv run p-touch-cube text "ラベル" --dry-run   # out/ に仕上がりの PNG ができる(テープは使わない)
+uv run p-touch-cube text "ラベル"             # 印刷
+uv run p-touch-cube text "ラベル" --tape-mm 9 --image heart.png --dry-run   # 9mm テープ、ハート+文字
+uv run p-touch-cube text "Label" --font ~/.fonts/Fredoka.ttf --dry-run     # 好きなフォントで
+uv run p-touch-cube text "Label ラベル" --font ja.ttf --latin-font en.ttf --dry-run   # 日本語と英数字で別のフォント
+uv run p-touch-cube text x --segment "ラベル=ja.ttf" --segment "Label=en.ttf" --dry-run   # 文字ごとのフォント
 uv run p-touch-cube image photo.jpg --dry-run
 ```
 
@@ -114,10 +114,11 @@ claude mcp add p-touch-cube --env PTOUCH_ADDR=XX:XX:XX:XX:XX:XX \
 - **機種を選べます**(PT-P300BT / PT-P320BT / PT-P710BT / PT-P910BT)。はじめは PT-P300BT で、テープは 12mm です。**それ以外は、選択肢に「(未検証)」と出ます。** PT-P710BT は実験的、PT-P320BT と PT-P910BT は下見のみです。機種ごとに、選べるテープ幅が変わります。
 - **日本語と English、ライトとダーク**を、右上のボタンで切り替えられます(はじめはライトです。`?lang=en` で、はじめから英語にもできます)。
 - **テープの幅を選べます**(3.5 / 6 / 9 / 12 / 18 / 24 / 36mm)。下見は、その幅のテープを**実寸**で表示します。点線の内側が、印刷される範囲です。
+- **画像として保存**できます(「画像として保存(PNG)」。ドットを 4 倍にした、白地に黒の PNG)。
 - **文字・画像・文字+画像**から選べます。文字+画像は、4 通りの並べ方ができます: 「画像→文字」「文字→画像」「画像→文字→画像(画像で文字を挟む)」「文字→画像→文字(文字で画像を挟む)」。大きさとすきまも調整できます。
 - **かわいいフォント**があります。日本語のかわいいフォントが 12 種類、英語(アルファベット)のかわいいフォントが 12 種類です。英語のフォントでは、日本語の文字だけ丸ゴシックで補うので、混ぜ書きもできます。
 - 画面の上に、緑のバーで、題名・言語・テーマのボタンが固定で付いています。
-- **フォントは、日本語と英数字で別々に選べます**(「Maru まある」を、英字は筆記体、日本語は丸ゴシック、のように)。さらに「文字ごとにフォントを選ぶ」にすると、文字を区切って、それぞれにフォントを付けられます(左から順につながります)。
+- **フォントは、日本語と英数字で別々に選べます**(「Label ラベル」を、英字は筆記体、日本語は丸ゴシック、のように)。さらに「文字ごとにフォントを選ぶ」にすると、文字を区切って、それぞれにフォントを付けられます(左から順につながります)。
 - ペアリングを済ませたら、ページで「つなぐだけ」を押して、一覧からプリンタを選びます。
 
 画像はあなたのパソコンの中だけで処理され、どこにも送られません。フォントだけは、Google Fonts からフォントのファイルを読み込みます(ラベルの文字そのものは送られません)。
@@ -143,14 +144,14 @@ claude mcp add p-touch-cube --env PTOUCH_ADDR=XX:XX:XX:XX:XX:XX \
 | ペアリング、接続(チャンネル 2)、ステータス取得(12mm・ラミネート) | 確認済み |
 | 日本語の文字の印刷(12mm ラミネート) | 確認済み |
 | 印刷ページ(ブラウザ)の下見(幅の選択、実寸表示、文字+画像、フォント) | 確認済み(Chrome) |
-| 印刷ページからの実際の印刷 | **未確認**(Python 版と同じバイト列になることは、CI でテスト済み) |
+| 印刷ページ(ブラウザ)からの文字の印刷(12mm) | 確認済み(Chrome。Python 版と同じバイト列になることは CI でもテスト済み) |
 | JPEG・PNG の印刷 | **未確認**(ドットの計算とプレビューはテスト済み) |
 | 布テープ・リボン(`media=non_laminated`) | **未確認** |
 | 3.5・6・9mm のテープ | **未確認**(印刷できる範囲のドット数は Brother の PT-P700 系の資料の値。Python と JS のバイト列の一致はテスト済み) |
 | 18・24mm(別機種向け)、36mm(印刷不可) | **未確認** / 印刷できない |
 | 文字+画像の印刷(4 通りの並べ方) | **未確認**(並べる処理と下見はテスト済み) |
 
-確かめられたら、結果を [Issue](https://github.com/RRYZ09/p-touch-cube-mcp/issues) か PR で教えてもらえると助かります。
+確かめられたら、結果を [Issue(動作報告)](https://github.com/RRYZ09/p-touch-cube-mcp/issues/new/choose) か PR で教えてもらえると助かります。
 
 ## 仕組みのメモ
 

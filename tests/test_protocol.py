@@ -35,7 +35,7 @@ def test_job_structure():
 
 
 def test_text_label_fits_head():
-    img = render.text_label("まある")
+    img = render.text_label("ラベル")
     assert img.height <= protocol.PRINTABLE_PX and img.width > 20
 
 
@@ -96,7 +96,7 @@ def test_combo_label_places_icon_and_text_side_by_side(tmp_path):
 
 
 def test_text_label_for_small_tape():
-    img = render.text_label("まある", tape_mm=6)
+    img = render.text_label("ラベル", tape_mm=6)
     assert img.height <= 32
 
 
@@ -126,15 +126,15 @@ def test_docs_cache_version_matches_package_version():
 
 
 def test_latin_font_is_used_only_for_ascii_runs():
-    runs = render.split_runs("Maru まある 2026", "ja.ttf", "en.ttf")
-    assert runs == [("Maru ", "en.ttf"), ("まある", "ja.ttf"), (" 2026", "en.ttf")]
+    runs = render.split_runs("Label ラベル 2026", "ja.ttf", "en.ttf")
+    assert runs == [("Label ", "en.ttf"), ("ラベル", "ja.ttf"), (" 2026", "en.ttf")]
     assert render.split_runs("abc", "ja.ttf", None) == [("abc", "ja.ttf")]
 
 
 def test_mixed_and_segment_labels_fit_the_head():
-    mixed = render.text_label("Maru まある", latin_font_path=None)
+    mixed = render.text_label("Label ラベル", latin_font_path=None)
     assert mixed.height <= 68
-    seg = render.segments_label([{"text": "まある"}, {"text": "Maru"}], tape_mm=9)
+    seg = render.segments_label([{"text": "ラベル"}, {"text": "Label"}], tape_mm=9)
     assert seg.height <= 50 and seg.width > 20
     import pytest
     with pytest.raises(ValueError):

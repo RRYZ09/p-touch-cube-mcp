@@ -11,7 +11,7 @@
 An **MCP server that prints labels on the Brother [P-touch CUBE (PT-P300BT)](https://www.brother.co.jp/product/labelwriter/special/cube/about/index.aspx)** over Bluetooth, straight from Claude or any MCP client. There is also a [**P-TOUCH CUBE Label Maker**](https://rryz09.github.io/p-touch-cube-mcp/?lang=en) (Japanese / English, light / dark) where you edit and print a label in Chrome.
 
 ```
-You:    Make a label that says "Maru". Show me a preview first.
+You:    Make a label that says "Souvenir". Show me a preview first.
 Claude: (renders a preview PNG) Here it is. Print it?
 You:    Print.
 Claude: (sends it to the printer) Printed 1 label.
@@ -88,8 +88,8 @@ uv run p-touch-cube text "Hello" --dry-run   # writes a preview PNG to out/ (no 
 uv run p-touch-cube text "Hello"             # print
 uv run p-touch-cube text "Hello" --tape-mm 9 --image heart.png --dry-run   # 9 mm tape, heart + text
 uv run p-touch-cube text "Hello" --font ~/.fonts/Fredoka.ttf --dry-run    # any font
-uv run p-touch-cube text "Maru まある" --font ja.ttf --latin-font en.ttf --dry-run   # different fonts for Japanese and ASCII
-uv run p-touch-cube text x --segment "まある=ja.ttf" --segment "Maru=en.ttf" --dry-run   # a font per piece
+uv run p-touch-cube text "Label ラベル" --font ja.ttf --latin-font en.ttf --dry-run   # different fonts for Japanese and ASCII
+uv run p-touch-cube text x --segment "ラベル=ja.ttf" --segment "Label=en.ttf" --dry-run   # a font per piece
 uv run p-touch-cube image photo.jpg --dry-run
 ```
 
@@ -111,10 +111,11 @@ Edit text or load an image, watch the preview, and print.
 - **Pick the printer model** (PT-P300BT / PT-P320BT / PT-P710BT / PT-P910BT). It starts on the PT-P300BT with 12 mm tape. **Everything else is marked "(unverified)" in the lists.** The PT-P710BT is experimental; the PT-P320BT and PT-P910BT are preview only. The available tape widths follow the model.
 - **Japanese / English and light / dark** from the buttons at the top right (it starts in light mode; `?lang=ja` / `?lang=en` in the URL picks the language).
 - **Pick the tape width** (3.5 / 6 / 9 / 12 / 18 / 24 / 36 mm). The preview shows that tape at **actual size**; the dashed lines mark the printable area.
+- **Save as an image** ("Save as image (PNG)": a black-on-white PNG at 4× the label dots).
 - **Text, image, or text + image.** Text + image has four layouts: "image → text", "text → image", "image → text → image" (image on both sides) and "text → image → text" (image between two texts), with size and gap controls.
 - **Cute fonts**: 12 Japanese and 12 English (Latin) ones. English fonts fall back to a rounded gothic for Japanese characters, so mixed text works.
 - A green top bar keeps the title, language and theme buttons in view.
-- **Separate fonts for Japanese and for letters/numbers** (e.g. a script font for the English and a rounded gothic for the Japanese in "Maru まある"). Turn on "Pick a font for each piece of text" to split the label into pieces with a font each (joined left to right).
+- **Separate fonts for Japanese and for letters/numbers** (e.g. a script font for the English and a rounded gothic for the Japanese in "Label ラベル"). Turn on "Pick a font for each piece of text" to split the label into pieces with a font each (joined left to right).
 - After pairing, press "connect only" and choose the printer from the browser's list.
 
 Images are processed on your machine and never uploaded. Only the fonts are fetched from Google Fonts (your label text is not sent).
@@ -140,14 +141,14 @@ Images are processed on your machine and never uploaded. Only the fonts are fetc
 | Pairing, connection (channel 2), status read (12 mm laminated) | Verified |
 | Printing Japanese text (12 mm laminated) | Verified |
 | Print page preview in Chrome (tape width, actual size, text + image, fonts) | Verified |
-| Actual printing from the print page | **Not verified** (byte-for-byte equal to the Python output, tested in CI) |
+| Printing text from the print page (12 mm) | Verified in Chrome (also byte-for-byte equal to the Python output, tested in CI) |
 | Printing JPEG/PNG | **Not verified** (dot math and preview are tested) |
 | Fabric tape / ribbon (`media=non_laminated`) | **Not verified** |
 | 3.5 / 6 / 9 mm tape | **Not verified** (printable dot counts come from Brother's PT-P700-series reference; Python and JS output are tested to be byte-identical) |
 | 18 / 24 mm (other models), 36 mm (not printable) | **Not verified** / not printable |
 | Printing text + image (4 layouts) | **Not verified** (layout and preview are tested) |
 
-Reports of what works for you are very welcome, as an issue or PR.
+Reports of what works for you are very welcome, as an [issue (hardware report)](https://github.com/RRYZ09/p-touch-cube-mcp/issues/new/choose) or PR.
 
 ## How it works
 

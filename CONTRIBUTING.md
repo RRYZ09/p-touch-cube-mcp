@@ -5,7 +5,7 @@
 
 ## まず Issue でも PR でも
 
-- **動いた・動かなかった**: [Issue](https://github.com/RRYZ09/p-touch-cube-mcp/issues) に、次の 4 つを書いてもらえると助かります。
+- **動いた・動かなかった**: [Issue](https://github.com/RRYZ09/p-touch-cube-mcp/issues/new/choose) で「動作報告」か「不具合」を選ぶと、書くことの欄が出ます。次の 4 つが分かると助かります。
   1. 機種(例: PT-P300BT)とテープ(幅・種類)
   2. OS とバージョン
   3. したこと(コマンド)と、出た結果(エラーの全文)

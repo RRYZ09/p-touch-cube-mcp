@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=Kiwi+Maru:wght@400;500&family=Hachi+Maru+Pop&family=Yomogi&family=Mochiy+Pop+One&family=Potta+One&family=Dela+Gothic+One&family=RocknRoll+One&family=Yusei+Magic&family=Klee+One:wght@400;600&family=Kaisei+Decol:wght@400;700&family=Zen+Kurenaido&family=Fredoka:wght@400;600&family=Baloo+2:wght@400;700&family=Chewy&family=Pacifico&family=Caveat:wght@400;700&family=Patrick+Hand&family=Sniglet:wght@400;800&family=Bubblegum+Sans&family=Gochi+Hand&family=Lobster&family=Quicksand:wght@400;700&family=Comfortaa:wght@400;700&display=swap">
-<link rel="stylesheet" href="style.css?v=0.3.2">
+<link rel="stylesheet" href="style.css?v=0.3.3">
 <script>
 // 画面のちらつきを避けるため、テーマは描画の前に決める
 var t = 'light'; try { if (localStorage.getItem('theme') === 'dark') t = 'dark'; } catch (e) {}
@@ -55,7 +55,7 @@ document.documentElement.setAttribute('data-theme', t);
     <div id="panel-text">
       <div id="simple-wrap">
         <label for="text" data-i18n="text-label">文字(改行で複数行。細いテープは 1 行がおすすめ)</label>
-        <textarea id="text" rows="2" placeholder="まある">まある</textarea>
+        <textarea id="text" rows="2" placeholder="ラベル">ラベル</textarea>
         <div class="row">
           <label><span data-i18n="font">日本語のフォント</span>
             <select id="font"></select>
@@ -98,7 +98,7 @@ document.documentElement.setAttribute('data-theme', t);
     <div id="panel-combo" hidden>
       <div id="text2-wrap" hidden>
         <label for="text2" data-i18n="text2-label">画像のあとの文字(「文字 → 画像 → 文字」のとき)</label>
-        <textarea id="text2" rows="1" placeholder="ちゃん"></textarea>
+        <textarea id="text2" rows="1" placeholder="あとの文字"></textarea>
       </div>
       <div class="row">
         <label><span data-i18n="imgpos">並べ方</span>
@@ -126,6 +126,9 @@ document.documentElement.setAttribute('data-theme', t);
     </div>
     <div class="preview"><div class="tape" id="tape-strip"><canvas id="preview" aria-label="ラベルの下見"></canvas></div></div>
     <p class="meta" id="meta">—</p>
+    <div class="row">
+      <button type="button" id="btn-save" data-i18n="btn-save">画像として保存(PNG)</button>
+    </div>
     <p class="hint" data-i18n="preview-hint">実寸は、画面の設定によって、少しずれることがあります。点線の内側が、印刷される範囲です。</p>
   </section>
 
@@ -158,6 +161,6 @@ document.documentElement.setAttribute('data-theme', t);
 
   <footer><a href="https://github.com/RRYZ09/p-touch-cube-mcp">GitHub</a> ・ <a href="https://github.com/RRYZ09/p-touch-cube-mcp/issues" data-i18n="footer-issues">不具合・動作報告</a> ・ Apache-2.0</footer>
 </main>
-<script type="module" src="app.js?v=0.3.2"></script>
+<script type="module" src="app.js?v=0.3.3"></script>
 </body>
 </html>
