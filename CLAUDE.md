@@ -1,10 +1,43 @@
-# p-touch-cube-mcp
+# CLAUDE.md
 
-Brother P-touch CUBE (PT-P300BT) に Bluetooth(RFCOMM/SPP)で直接ラベルを印刷する MCP サーバー。
+Claude Code などの AI エージェントが、このリポジトリで作業するときの案内です。人が読んでも大丈夫です。
 
-- 本体: `src/ptouch_cube_mcp/`(protocol=バイト列、render=文字・画像→白黒、transport=ソケット、service=共通処理、server=MCP、cli)
-- プリンタのアドレスは環境変数 `PTOUCH_ADDR`。**リポジトリには書かない**(公開リポ)
-- 実機で確かめていないことは README の「確認状況」に書き、確かめたら更新する
-- テスト: `uv run pytest`(プリンタ不要)
-- 印刷は物理の操作(テープを使う)。最初は `dry_run` で PNG を見てから刷る
-- コミットは RRYZ09 名義。push は `env GIT_SSH_COMMAND="ssh -i ~/.ssh/rryz -o IdentitiesOnly=yes -o IdentityAgent=none" git push`
+## これは何か
+
+Brother P-touch CUBE (PT-P300BT) に、Bluetooth(RFCOMM / SPP)でラベルを印刷する MCP サーバーです。
+利用者向けの説明は [README.md](README.md)、参加のしかたは [CONTRIBUTING.md](CONTRIBUTING.md) にあります。
+
+## コードの場所
+
+| ファイル | 役割 |
+|---|---|
+| `src/ptouch_cube_mcp/protocol.py` | プリンタに送るバイト列(ラスター命令、PackBits、ステータスの読み取り) |
+| `src/ptouch_cube_mcp/render.py` | 文字・画像を、高さ 68 ドット以下の白黒ラベルにする |
+| `src/ptouch_cube_mcp/transport.py` | Bluetooth のソケットでつなぎ、送る・ステータスを読む |
+| `src/ptouch_cube_mcp/service.py` | MCP とコマンドラインの共通処理(下見の PNG を作る、印刷する) |
+| `src/ptouch_cube_mcp/server.py` | MCP サーバー(FastMCP、ツールは 3 つ) |
+| `src/ptouch_cube_mcp/cli.py` | コマンド `p-touch-cube`(status / text / image) |
+| `tests/` | プリンタなしで動くテスト |
+
+## コマンド
+
+```sh
+uv sync
+PYTEST_DISABLE_PLUGIN_AUTOLOAD=1 uv run pytest    # テスト
+uv run p-touch-cube text "テスト" --dry-run        # 下見(テープは使わない)
+```
+
+## 守ること
+
+- **プリンタの Bluetooth アドレスをコミットしない。** 環境変数 `PTOUCH_ADDR` で渡します。例は `XX:XX:XX:XX:XX:XX`。
+- **印刷はテープを使う物理の操作です。** 依頼されていない印刷や、まとめて何枚も刷ることはしないでください。最初は `dry_run` で下見を作って見せます。
+- **実機で確かめていないことを「動く」と書かない。** README の「動作確認の状況」を、確かめた分だけ更新します。
+- `mcp` は 1.x に固定しています(2.x は FastMCP が別名になり、このコードは動きません)。上げるときは、コードも直して、MCP クライアントから動かして確かめます。
+- 通信の仕様は、有志の解析にもとづいています。変えるときは、README の「仕組みのメモ」と、`protocol.py` の説明も直します。
+- `main` に直接 push せず、ブランチと PR で変更します。
+
+## よくある作業
+
+- **新しいツールを足す:** `service.py` に処理を書き、`server.py` に `@mcp.tool()` で出します。説明文(docstring)が、そのまま AI への説明になるので、使い方と注意を書きます。
+- **テープの種類を足す:** `protocol.py` の `MEDIA_*` と、`service.py` の `MEDIA` に足します。実機で確かめたら、README の表を更新します。
+- **印刷の向きや鏡文字を直す:** `protocol.py` の `label_to_columns` です。`tests/test_protocol.py` の、向きと端のテストも合わせて直します。
