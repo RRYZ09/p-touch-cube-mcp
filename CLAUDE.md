@@ -17,6 +17,8 @@ Brother P-touch CUBE (PT-P300BT) に、Bluetooth(RFCOMM / SPP)でラベルを印
 | `src/ptouch_cube_mcp/service.py` | MCP とコマンドラインの共通処理(下見の PNG を作る、印刷する) |
 | `src/ptouch_cube_mcp/server.py` | MCP サーバー(FastMCP、ツールは 3 つ) |
 | `src/ptouch_cube_mcp/cli.py` | コマンド `p-touch-cube`(status / text / image) |
+| `docs/` | GitHub Pages の印刷ページ(`protocol.js` は Python 版の移植、`app.js` が画面と Web Serial) |
+| `web_tests/parity.mjs` | 印刷ページの JS が Python 版と同じバイト列を作るかの確認(`tests/test_protocol.py` から呼ぶ) |
 | `tests/` | プリンタなしで動くテスト |
 
 ## コマンド
@@ -34,6 +36,8 @@ uv run p-touch-cube text "テスト" --dry-run        # 下見(テープは使�
 - **実機で確かめていないことを「動く」と書かない。** README の「動作確認の状況」を、確かめた分だけ更新します。
 - `mcp` は 1.x に固定しています(2.x は FastMCP が別名になり、このコードは動きません)。上げるときは、コードも直して、MCP クライアントから動かして確かめます。
 - 通信の仕様は、有志の解析にもとづいています。変えるときは、README の「仕組みのメモ」と、`protocol.py` の説明も直します。
+- **`protocol.py` を変えたら、`docs/protocol.js` も同じに直す。** 2 つが同じバイト列を作ることを、テスト(`test_web_version_builds_identical_job`)が見ています。
+- README は `README.md`(日本語)と `README_EN.md`(英語)の 2 つ。片方を直したら、もう片方も直します。
 - `main` に直接 push せず、ブランチと PR で変更します。
 
 ## よくある作業

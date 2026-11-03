@@ -1,8 +1,15 @@
 # p-touch-cube-mcp
 
-**Brother P-touch CUBE (PT-P300BT) に、Claude から話しかけてラベルを印刷する** MCP サーバーです。
+[![CI](https://github.com/RRYZ09/p-touch-cube-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/RRYZ09/p-touch-cube-mcp/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/RRYZ09/p-touch-cube-mcp)](https://github.com/RRYZ09/p-touch-cube-mcp/releases)
+[![License: Apache-2.0](https://img.shields.io/github/license/RRYZ09/p-touch-cube-mcp)](LICENSE)
+![Python 3.10+](https://img.shields.io/badge/python-3.10%2B-blue)
+![Linux](https://img.shields.io/badge/OS-Linux-lightgrey)
 
-> English: An MCP server that prints labels on the Brother P-touch CUBE (PT-P300BT) over Bluetooth (RFCOMM/SPP), without the official app. Text (Japanese OK) and JPEG/PNG. Linux only for now. Unofficial; use at your own risk. See [Quick start](#クイックスタート).
+[English](README_EN.md) ・ **日本語**
+
+**Brother [P-touch CUBE (PT-P300BT)](https://www.brother.co.jp/product/labelwriter/special/cube/about/index.aspx) に、Claude から話しかけてラベルを印刷する** MCP サーバーです。
+ブラウザで編集して印刷できる[**印刷ページ**](https://rryz09.github.io/p-touch-cube-mcp/)もあります。
 
 ```
 あなた: 「まある」って名前のラベルを作って。まず下見だけ見せて。
@@ -11,12 +18,21 @@ Claude: (下見の画像を作る) こんな見た目です。刷りますか?
 Claude: (プリンタに送る) 1 枚印刷しました。
 ```
 
-公式アプリ(P-touch Design&Print)を使わず、パソコンから直接つなぎます。
-アプリは「文字 1 つ・アイコン 3 つまで」などの制限がありますが、この MCP なら好きな文字や、JPEG の画像もラベルにできます。
+公式アプリ([P-touch Design&Print](https://www.brother.co.jp/product/labelwriter/special/cube/about/index.aspx))を使わず、パソコンから直接つなぎます。
+アプリには「文字 1 つ・アイコン 3 つまで」などの制限がありますが、ここでは好きな文字や、JPEG の画像もラベルにできます。
 
 **非公式の使い方です。** Brother の公式サポートの範囲外なので、自己責任でお使いください。
 
-## 何ができるか
+## 使い方は 2 つ
+
+| | こんな人に | 必要なもの |
+|---|---|---|
+| **[印刷ページ](https://rryz09.github.io/p-touch-cube-mcp/)**(ブラウザ) | 手軽に刷りたい。インストールしたくない | パソコンの Chrome か Edge(Web Serial 対応)。ペアリング済みのプリンタ |
+| **MCP / コマンドライン** | Claude に頼んで刷りたい。自動化したい | Linux、Python、uv |
+
+どちらも、先に**パソコンとプリンタのペアリング**が要ります(下の手順 2)。
+
+## 何ができるか(MCP)
 
 | ツール | 内容 |
 |---|---|
@@ -27,15 +43,14 @@ Claude: (プリンタに送る) 1 枚印刷しました。
 ## 用意するもの
 
 - Brother **PT-P300BT**(P-touch CUBE)と、12mm 幅のテープ
-- **Linux** のパソコンで、Bluetooth が使えるもの(Ubuntu 24.04 で動作確認)
-- Python 3.10 以上と、[uv](https://docs.astral.sh/uv/)
-- Claude Code など、MCP が使えるアプリ(コマンドラインだけでも使えます)
+- MCP・コマンドライン: **Linux** のパソコンで Bluetooth が使えるもの(Ubuntu 24.04 で動作確認)、Python 3.10 以上、[uv](https://docs.astral.sh/uv/)
+- 印刷ページ: パソコンの Chrome か Edge(Safari・Firefox・iPhone・iPad では動きません)
 
-macOS と Windows は、いまは動きません(Python の Bluetooth ソケットを使っているため)。対応のお手伝いは歓迎です([CONTRIBUTING.md](CONTRIBUTING.md))。
+macOS と Windows の MCP・コマンドライン版は、いまは動きません(Python の Bluetooth ソケットを使っているため)。印刷ページなら、Chrome があれば動く可能性があります。対応のお手伝いは歓迎です([CONTRIBUTING.md](CONTRIBUTING.md))。
 
 ## クイックスタート
 
-### 1. 取ってくる
+### 1. 取ってくる(MCP・コマンドライン)
 
 ```sh
 git clone https://github.com/RRYZ09/p-touch-cube-mcp.git
@@ -43,7 +58,7 @@ cd p-touch-cube-mcp
 uv sync
 ```
 
-### 2. プリンタとペアリングする(初回だけ)
+### 2. プリンタとペアリングする(初回だけ。印刷ページも同じ)
 
 プリンタの電源を入れてから、次を実行します。
 
@@ -86,6 +101,13 @@ claude mcp add p-touch-cube --env PTOUCH_ADDR=XX:XX:XX:XX:XX:XX \
 登録したあと、Claude Code を開き直してください。あとは「ラベルを作って」と頼むだけです。
 **テープを使うので、最初の 1 枚は、下見(dry_run)で見た目を確かめてから**刷るのがおすすめです。
 
+## 印刷ページ(ブラウザ)
+
+<https://rryz09.github.io/p-touch-cube-mcp/>
+
+文字や画像をその場で編集して、下見を見ながら印刷できます。ペアリングを済ませたら、ページで「つなぐだけ」を押して、一覧からプリンタを選びます。
+画像はあなたのパソコンの中だけで処理され、どこにも送られません。
+
 ## つまずいたとき
 
 | 症状 | 試すこと |
@@ -95,6 +117,7 @@ claude mcp add p-touch-cube --env PTOUCH_ADDR=XX:XX:XX:XX:XX:XX \
 | ステータスが意味不明な値(同じ並びの繰り返し) | 接続先のチャンネルが違います。`sdptool browse <アドレス>` で「SPP SERVER」の Channel を見て、`PTOUCH_CHANNEL` に入れる(PT-P300BT は 2) |
 | 印刷のあとにエラーで止まる | プリンタの電源ボタンを 1 回押すと戻ることが多いです(有志の報告) |
 | 日本語が四角になる | 日本語フォントが見つからない状態です。`PTOUCH_FONT` にフォントファイルのパスを入れる |
+| 印刷ページでプリンタが一覧に出ない | 先に OS でペアリングしたか。Chrome・Edge か。ページを開き直して試す |
 | 文字が鏡文字・逆さになる | [Issue](https://github.com/RRYZ09/p-touch-cube-mcp/issues) に、機種とテープの種類を書いて教えてください |
 
 ## 動作確認の状況
@@ -103,6 +126,8 @@ claude mcp add p-touch-cube --env PTOUCH_ADDR=XX:XX:XX:XX:XX:XX \
 |---|---|
 | ペアリング、接続(チャンネル 2)、ステータス取得(12mm・ラミネート) | 確認済み |
 | 日本語の文字の印刷(12mm ラミネート) | 確認済み |
+| 印刷ページ(ブラウザ)の下見 | 確認済み(Chrome) |
+| 印刷ページからの実際の印刷 | **未確認**(Python 版と同じバイト列になることは、CI でテスト済み) |
 | JPEG・PNG の印刷 | **未確認**(ドットの計算とプレビューはテスト済み) |
 | 布テープ・リボン(`media=non_laminated`) | **未確認** |
 | 12mm 以外の幅 | **未確認**(印刷できる範囲の計算は 12mm 固定) |
@@ -115,6 +140,7 @@ claude mcp add p-touch-cube --env PTOUCH_ADDR=XX:XX:XX:XX:XX:XX \
 - ヘッドは 128 ドット(16 バイト)で、12mm テープで印刷できるのは中央の約 68 ドットです。
 - ラベル画像の 1 列が、ラスターの 1 行です。90 度回して左右を反転し、PackBits で圧縮して送ります。
 - 命令の流れ: 初期化 → ラスターモード → 印刷情報(テープ幅・行数)→ 余白 → 圧縮指定 → ラスター行 → 印刷(`0x1A`)。
+- 印刷ページ(`docs/`)は、同じ処理の JavaScript 版です。Chrome の Web Serial で、Bluetooth のシリアルポートに直接つなぎます。
 
 コードの場所は、[CLAUDE.md](CLAUDE.md) の一覧にあります。
 
