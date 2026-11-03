@@ -5,7 +5,7 @@ description = "Brother P-touch CUBE (PT-P300BT) にラベルを印刷する MCP 
 readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
-    "mcp>=1.2.0",
+    "mcp>=1.2.0,<2",
     "pillow>=10.0",
 ]
 
