@@ -1,14 +1,16 @@
 import {
   TAPE_PRINTABLE_PX, VERIFIED_TAPES_MM, MEDIA, buildJob, STATUS_REQUEST, parseStatus,
-} from './protocol.js?v=0.3.3';
-import { MODELS, canPrint } from './models.js?v=0.3.3';
-import { EN, JA_DYNAMIC } from './i18n.js?v=0.3.3';
+} from './protocol.js?v=0.3.4';
+import { parseSettings, serializeSettings } from './settings.js?v=0.3.4';
+import { MODELS, canPrint } from './models.js?v=0.3.4';
+import { EN, JA_DYNAMIC } from './i18n.js?v=0.3.4';
 
 const $ = (id) => document.getElementById(id);
 const SPP = '00001101-0000-1000-8000-00805f9b34fb';
 const SIDE_PAD = 12;
 let bitmap = null; // { bits, width, height, tapeMm }
 let imageEl = null;
+let fileData = null; // 読み込んだ画像の data URL(設定に含めるため)
 let lang = 'ja';
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -417,13 +419,19 @@ $('imgpos').addEventListener('input', showPanels);
 $('model').addEventListener('input', () => { buildTapeOptions(); setPrintEnabled(); render(); });
 $('seg-mode').addEventListener('input', () => { showPanels(); render(); });
 for (const id of ['text2', 'tape', 'text', 'font', 'font-en', 'bold', 'fsize', 'rotate', 'dither', 'invert', 'thresh', 'imgpos', 'iconscale', 'gap', 'zoom']) $(id).addEventListener('input', render);
+function loadImageData(dataUrl) {
+  const img = new Image();
+  img.onload = () => { fileData = dataUrl; imageEl = img; render(); };
+  img.onerror = () => log(T('img-fail'));
+  img.src = dataUrl;
+}
 $('file').addEventListener('change', (e) => {
   const f = e.target.files[0];
   if (!f) return;
-  const img = new Image();
-  img.onload = () => { imageEl = img; render(); };
-  img.onerror = () => log(T('img-fail'));
-  img.src = URL.createObjectURL(f);
+  const rd = new FileReader();
+  rd.onload = () => loadImageData(rd.result);
+  rd.onerror = () => log(T('img-fail'));
+  rd.readAsDataURL(f);
 });
 if (document.fonts?.ready) document.fonts.ready.then(render);
 $('lang').onclick = () => setLang(lang === 'en' ? 'ja' : 'en');
@@ -459,6 +467,60 @@ $('btn-save').onclick = () => {
     log(T('saved', { name }));
   }, 'image/png');
 };
+
+// ---- 設定の書き出し・読み込み(JSON)。フォントは、並び順が変わっても読めるように、名前で持つ
+const fontKeyOf = (i) => FONTS[parseInt(i, 10)]?.css.split(',')[0].replace(/'/g, '') ?? '';
+const fontIndexOf = (key, fallback) => { const i = FONTS.findIndex((f) => f.css.split(',')[0].replace(/'/g, '') === key); return i < 0 ? fallback : String(i); };
+const stamp = () => { const d = new Date(), p2 = (n) => String(n).padStart(2, '0'); return `${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}`; };
+
+function getSettings() {
+  const st = {
+    model: model(), tape: tapeMm(), mode: modeVal(), text: $('text').value, text2: $('text2').value,
+    fontJa: fontKeyOf($('font').value), fontEn: $('font-en').value === 'same' ? 'same' : fontKeyOf($('font-en').value),
+    bold: $('bold').checked, fsize: parseInt($('fsize').value, 10) || null,
+    segMode: segMode(), segments: segs.map((g) => ({ text: g.text, font: fontKeyOf(g.font) })),
+    rotate: parseInt($('rotate').value, 10), dither: $('dither').checked, invert: $('invert').checked, thresh: parseInt($('thresh').value, 10),
+    layout: $('imgpos').value, iconscale: parseInt($('iconscale').value, 10), gap: parseInt($('gap').value, 10) || 0,
+    zoom: parseInt($('zoom').value, 10), copies: parseInt($('copies').value, 10) || 1, media: $('media').value,
+  };
+  if ($('incl-image').checked && fileData) st.image = fileData;
+  return st;
+}
+
+function applySettings(st) {
+  $('model').value = st.model; buildTapeOptions(); $('tape').value = String(st.tape);
+  const r = document.querySelector(`input[name=mode][value=${st.mode}]`); if (r) r.checked = true;
+  $('text').value = st.text; $('text2').value = st.text2;
+  $('font').value = fontIndexOf(st.fontJa, $('font').value);
+  $('font-en').value = st.fontEn === 'same' ? 'same' : fontIndexOf(st.fontEn, 'same');
+  $('bold').checked = st.bold; $('fsize').value = st.fsize ?? '';
+  $('seg-mode').checked = st.segMode;
+  if (st.segments.length) segs = st.segments.map((g) => ({ text: g.text, font: fontIndexOf(g.font, '0') }));
+  $('rotate').value = String(st.rotate); $('dither').checked = st.dither; $('invert').checked = st.invert; $('thresh').value = st.thresh;
+  $('imgpos').value = st.layout; $('iconscale').value = st.iconscale; $('gap').value = st.gap;
+  $('zoom').value = String(st.zoom); $('copies').value = st.copies; $('media').value = st.media;
+  buildSegments(); showPanels(); setPrintEnabled();
+  if (st.image) loadImageData(st.image); else render();
+}
+
+$('btn-export').onclick = () => {
+  const name = `p-touch-label-settings-${stamp()}.json`;
+  const url = URL.createObjectURL(new Blob([serializeSettings(getSettings())], { type: 'application/json' }));
+  const a = document.createElement('a'); a.href = url; a.download = name;
+  document.body.append(a); a.click(); a.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
+  log(T('exported', { name }));
+};
+$('btn-import').onclick = () => $('import-file').click();
+$('import-file').addEventListener('change', async (e) => {
+  const f = e.target.files[0];
+  e.target.value = '';
+  if (!f) return;
+  const r = parseSettings(await f.text());
+  if (!r.ok) { log(T('imp-' + r.errors[0])); return; }
+  applySettings(r.settings);
+  log(T('imported', { name: f.name }));
+});
 
 // ---- プリンタ(Web Serial の Bluetooth シリアル)
 async function pickPort() {

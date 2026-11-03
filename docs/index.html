@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=Kiwi+Maru:wght@400;500&family=Hachi+Maru+Pop&family=Yomogi&family=Mochiy+Pop+One&family=Potta+One&family=Dela+Gothic+One&family=RocknRoll+One&family=Yusei+Magic&family=Klee+One:wght@400;600&family=Kaisei+Decol:wght@400;700&family=Zen+Kurenaido&family=Fredoka:wght@400;600&family=Baloo+2:wght@400;700&family=Chewy&family=Pacifico&family=Caveat:wght@400;700&family=Patrick+Hand&family=Sniglet:wght@400;800&family=Bubblegum+Sans&family=Gochi+Hand&family=Lobster&family=Quicksand:wght@400;700&family=Comfortaa:wght@400;700&display=swap">
-<link rel="stylesheet" href="style.css?v=0.3.3">
+<link rel="stylesheet" href="style.css?v=0.3.4">
 <script>
 // 画面のちらつきを避けるため、テーマは描画の前に決める
 var t = 'light'; try { if (localStorage.getItem('theme') === 'dark') t = 'dark'; } catch (e) {}
@@ -129,6 +129,15 @@ document.documentElement.setAttribute('data-theme', t);
     <div class="row">
       <button type="button" id="btn-save" data-i18n="btn-save">画像として保存(PNG)</button>
     </div>
+
+    <h3 data-i18n="h-settings">設定の書き出し・読み込み</h3>
+    <div class="row">
+      <button type="button" id="btn-export" data-i18n="btn-export">設定を書き出す(JSON)</button>
+      <button type="button" id="btn-import" data-i18n="btn-import">設定を読み込む</button>
+      <label><input type="checkbox" id="incl-image"> <span data-i18n="incl-image">画像も含める</span></label>
+      <input type="file" id="import-file" accept="application/json,.json" hidden>
+    </div>
+    <p class="hint" data-i18n="settings-hint">いま作っているラベルの設定(機種・テープ・文字・フォント・並べ方など)を、ファイルに保存して、あとで読み込めます。画像のファイルは、「画像も含める」にしたときだけ、中に入ります(大きくなります)。</p>
     <p class="hint" data-i18n="preview-hint">実寸は、画面の設定によって、少しずれることがあります。点線の内側が、印刷される範囲です。</p>
   </section>
 
@@ -161,6 +170,6 @@ document.documentElement.setAttribute('data-theme', t);
 
   <footer><a href="https://github.com/RRYZ09/p-touch-cube-mcp">GitHub</a> ・ <a href="https://github.com/RRYZ09/p-touch-cube-mcp/issues" data-i18n="footer-issues">不具合・動作報告</a> ・ Apache-2.0</footer>
 </main>
-<script type="module" src="app.js?v=0.3.3"></script>
+<script type="module" src="app.js?v=0.3.4"></script>
 </body>
 </html>

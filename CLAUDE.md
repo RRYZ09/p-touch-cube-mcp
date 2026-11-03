@@ -17,7 +17,8 @@ Brother P-touch CUBE (PT-P300BT) に、Bluetooth(RFCOMM / SPP)でラベルを印
 | `src/ptouch_cube_mcp/service.py` | MCP とコマンドラインの共通処理(下見の PNG を作る、印刷する) |
 | `src/ptouch_cube_mcp/server.py` | MCP サーバー(FastMCP、ツールは 3 つ) |
 | `src/ptouch_cube_mcp/cli.py` | コマンド `p-touch-cube`(status / text / image) |
-| `docs/` | GitHub Pages の「P-TOUCH CUBE ラベルメーカー」(`protocol.js` は Python 版の移植、`app.js` が画面と Web Serial、`models.js` が機種表、`i18n.js` が日本語・英語の文) |
+| `docs/` | GitHub Pages の「P-TOUCH CUBE ラベルメーカー」(`protocol.js` は Python 版の移植、`app.js` が画面と Web Serial、`models.js` が機種表、`i18n.js` が日本語・英語の文、`settings.js` が設定の書き出し・読み込みの検証) |
+| `web_tests/settings.mjs` | 設定の読み込みの検証(範囲外・別アプリ・新しすぎる版のファイルをはねる)の確認 |
 | `web_tests/parity.mjs` | 印刷ページの JS が Python 版と同じバイト列を作るかの確認(`tests/test_protocol.py` から呼ぶ) |
 | `tests/` | プリンタなしで動くテスト |
 
