@@ -8,7 +8,7 @@
 
 **English** ・ [日本語](README.md)
 
-An **MCP server that prints labels on the Brother [P-touch CUBE (PT-P300BT)](https://www.brother.co.jp/product/labelwriter/special/cube/about/index.aspx)** over Bluetooth, straight from Claude or any MCP client. There is also a [**browser print page**](https://rryz09.github.io/p-touch-cube-mcp/) where you edit and print a label in Chrome.
+An **MCP server that prints labels on the Brother [P-touch CUBE (PT-P300BT)](https://www.brother.co.jp/product/labelwriter/special/cube/about/index.aspx)** over Bluetooth, straight from Claude or any MCP client. There is also a [**P-TOUCH CUBE Label Maker**](https://rryz09.github.io/p-touch-cube-mcp/?lang=en) (Japanese / English, light / dark) where you edit and print a label in Chrome.
 
 ```
 You:    Make a label that says "Maru". Show me a preview first.
@@ -25,7 +25,7 @@ It does not need the official app. The official app limits a label to one text o
 
 | | For | Needs |
 |---|---|---|
-| **[Print page](https://rryz09.github.io/p-touch-cube-mcp/)** (browser) | Quick printing, nothing to install | Desktop Chrome or Edge (Web Serial), printer already paired |
+| **[Label Maker](https://rryz09.github.io/p-touch-cube-mcp/?lang=en)** (browser) | Quick printing, nothing to install | Desktop Chrome or Edge (Web Serial), printer already paired |
 | **MCP / command line** | Ask Claude to print; automation | Linux, Python, uv |
 
 Both need the printer **paired with your computer** first (step 2 below).
@@ -34,7 +34,7 @@ Both need the printer **paired with your computer** first (step 2 below).
 
 | Tool | What it does |
 |---|---|
-| `print_label_text` | Prints text. Multi-line supported. `dry_run` renders a preview PNG without printing |
+| `print_label_text` | Prints text. Multi-line supported. Pass `image_path` to put an image beside the text, `tape_mm` for the tape width (3.5–24) and `font_path` for any font file. `dry_run` renders a preview PNG without printing |
 | `print_label_image` | Prints a JPEG/PNG, converted to black and white and scaled to the tape width. Can rotate |
 | `printer_status` | Reads tape width, tape type and error state. Also a connection check |
 
@@ -86,6 +86,8 @@ You should see `"ok": true` and the tape width (`"tape_mm": 12`).
 ```sh
 uv run p-touch-cube text "Hello" --dry-run   # writes a preview PNG to out/ (no tape used)
 uv run p-touch-cube text "Hello"             # print
+uv run p-touch-cube text "Hello" --tape-mm 9 --image heart.png --dry-run   # 9 mm tape, heart + text
+uv run p-touch-cube text "Hello" --font ~/.fonts/Fredoka.ttf --dry-run    # any font
 uv run p-touch-cube image photo.jpg --dry-run
 ```
 
@@ -100,9 +102,20 @@ Restart Claude Code, then just ask for a label. Printing uses tape, so check the
 
 ## Print page (browser)
 
-<https://rryz09.github.io/p-touch-cube-mcp/>
+<https://rryz09.github.io/p-touch-cube-mcp/?lang=en>
 
-Edit text or load an image, watch the preview, and print. After pairing, press "connect only" and choose the printer from the browser's list. Images are processed on your machine and never uploaded.
+Edit text or load an image, watch the preview, and print.
+
+- **Pick the printer model** (PT-P300BT / PT-P320BT / PT-P710BT / PT-P910BT). Only the PT-P300BT prints today (verified on 12 mm only). The PT-P710BT is experimental (unverified); the PT-P320BT and PT-P910BT are preview only. The available tape widths follow the model.
+- **Japanese / English and light / dark** from the buttons at the top right (`?lang=ja` / `?lang=en` in the URL picks the language).
+- **Pick the tape width** (3.5 / 6 / 9 / 12 / 18 / 24 / 36 mm). The preview shows that tape at **actual size**; the dashed lines mark the printable area.
+- **Text, image, or text + image** (the image goes left or right of the text, with size and gap controls).
+- **Cute fonts**: 12 Japanese and 12 English (Latin) ones. English fonts fall back to a rounded gothic for Japanese characters, so mixed text works.
+- After pairing, press "connect only" and choose the printer from the browser's list.
+
+Images are processed on your machine and never uploaded. Only the fonts are fetched from Google Fonts (your label text is not sent).
+
+**About tape widths**: the PT-P300BT takes 3.5–12 mm tape. 18 and 24 mm are for other models such as the PT-P710BT, and 36 mm cannot be printed with a 128-dot head (preview only). Only 12 mm has been verified on real hardware.
 
 ## Troubleshooting
 
@@ -122,11 +135,13 @@ Edit text or load an image, watch the preview, and print. After pairing, press "
 |---|---|
 | Pairing, connection (channel 2), status read (12 mm laminated) | Verified |
 | Printing Japanese text (12 mm laminated) | Verified |
-| Print page preview in Chrome | Verified |
+| Print page preview in Chrome (tape width, actual size, text + image, fonts) | Verified |
 | Actual printing from the print page | **Not verified** (byte-for-byte equal to the Python output, tested in CI) |
 | Printing JPEG/PNG | **Not verified** (dot math and preview are tested) |
 | Fabric tape / ribbon (`media=non_laminated`) | **Not verified** |
-| Tape widths other than 12 mm | **Not verified** (printable area is fixed for 12 mm) |
+| 3.5 / 6 / 9 mm tape | **Not verified** (printable dot counts come from Brother's PT-P700-series reference; Python and JS output are tested to be byte-identical) |
+| 18 / 24 mm (other models), 36 mm (not printable) | **Not verified** / not printable |
+| Printing text + image | **Not verified** (layout and preview are tested) |
 
 Reports of what works for you are very welcome, as an issue or PR.
 

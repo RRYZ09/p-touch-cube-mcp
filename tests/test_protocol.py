@@ -40,7 +40,7 @@ def test_text_label_fits_head():
 
 
 def test_web_version_builds_identical_job():
-    """docs/protocol.js(GitHub Pages の印刷ページ)が、Python 版と同じバイト列を作る。"""
+    """docs/protocol.js(GitHub Pages の印刷ページ)が、どのテープ幅でも Python 版と同じバイト列を作る。"""
     import shutil
     import subprocess
     from pathlib import Path
@@ -50,13 +50,51 @@ def test_web_version_builds_identical_job():
     node = shutil.which("node")
     if not node:
         pytest.skip("node が無い")
-    W, H = 40, 68
-    img = Image.new("L", (W, H), 255)
-    for y in range(H):
-        for x in range(W):
-            if (x * 3 + y * 5) % 7 < 3:
-                img.putpixel((x, y), 0)
-    expected = protocol.build_job(img).hex()
     script = Path(__file__).resolve().parents[1] / "web_tests" / "parity.mjs"
-    got = subprocess.run([node, str(script)], capture_output=True, text=True, check=True).stdout.strip()
-    assert got == expected
+    for mm, H in protocol.TAPE_PRINTABLE_PX.items():
+        W = 40
+        img = Image.new("L", (W, H), 255)
+        for y in range(H):
+            for x in range(W):
+                if (x * 3 + y * 5) % 7 < 3:
+                    img.putpixel((x, y), 0)
+        expected = protocol.build_job(img, tape_mm=mm).hex()
+        got = subprocess.run([node, str(script), str(mm)], capture_output=True, text=True, check=True).stdout.strip()
+        assert got == expected, f"{mm}mm で Python 版と JS 版のバイト列が違う"
+
+
+def test_every_tape_width_fits_the_head():
+    for mm, px in protocol.TAPE_PRINTABLE_PX.items():
+        assert px <= protocol.HEAD_PX
+        line = protocol.label_to_columns(Image.new("L", (5, px), 0), mm)[0]
+        assert sum(bin(b).count("1") for b in line) == px   # 中央の px ドットだけ黒
+    assert protocol.printable_px(12) == 68
+
+
+def test_36mm_is_not_printable_and_unknown_width_rejected():
+    import pytest
+    with pytest.raises(ValueError):
+        protocol.printable_px(36)
+    with pytest.raises(ValueError):
+        protocol.printable_px(7)
+
+
+def test_3_5mm_is_sent_as_4():
+    job = protocol.build_job(Image.new("L", (5, 24), 0), tape_mm=3.5)
+    assert b"\x1b\x69\x7a\xc4\x01\x04\x00" in job
+
+
+def test_combo_label_places_icon_and_text_side_by_side(tmp_path):
+    icon = tmp_path / "i.png"
+    Image.new("RGB", (40, 40), (0, 0, 0)).save(icon)
+    img = render.combo_label("あ", str(icon), tape_mm=12)
+    assert img.height == 68
+    left = render.combo_label("あ", str(icon), image_position="left")
+    right = render.combo_label("あ", str(icon), image_position="right")
+    # 左に画像: 左端は黒(画像)。右に画像: 左端は白(文字の余白)
+    assert left.getpixel((5, 34)) == 0 and right.getpixel((5, 34)) == 255
+
+
+def test_text_label_for_small_tape():
+    img = render.text_label("まある", tape_mm=6)
+    assert img.height <= 32

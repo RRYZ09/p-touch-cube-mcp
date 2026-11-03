@@ -3,92 +3,140 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>P-touch CUBE ラベルを作って印刷</title>
-<meta name="description" content="Brother P-touch CUBE (PT-P300BT) に、ブラウザから直接ラベルを印刷します。">
+<title>P-TOUCH CUBE ラベルメーカー</title>
+<meta name="description" content="Brother P-touch CUBE に、ブラウザから直接ラベルを印刷します。 / Print labels on the Brother P-touch CUBE from your browser.">
+<meta name="color-scheme" content="light dark">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=Kiwi+Maru:wght@400;500&family=Hachi+Maru+Pop&family=Yomogi&family=Mochiy+Pop+One&family=Potta+One&family=Dela+Gothic+One&family=RocknRoll+One&family=Yusei+Magic&family=Klee+One:wght@400;600&family=Kaisei+Decol:wght@400;700&family=Zen+Kurenaido&family=Fredoka:wght@400;600&family=Baloo+2:wght@400;700&family=Chewy&family=Pacifico&family=Caveat:wght@400;700&family=Patrick+Hand&family=Sniglet:wght@400;800&family=Bubblegum+Sans&family=Gochi+Hand&family=Lobster&family=Quicksand:wght@400;700&family=Comfortaa:wght@400;700&display=swap">
 <link rel="stylesheet" href="style.css">
+<script>
+// 画面のちらつきを避けるため、テーマは描画の前に決める
+try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+</script>
 </head>
 <body>
 <main>
   <header>
-    <h1>P-touch CUBE ラベルを作って印刷</h1>
-    <p class="lead">Brother <b>PT-P300BT</b> に、ブラウザから Bluetooth で直接印刷します。アプリは要りません。</p>
+    <div class="topbar">
+      <h1 data-i18n="h1">P-TOUCH CUBE ラベルメーカー</h1>
+      <div class="toggles">
+        <button type="button" id="lang" class="small" aria-label="Language">EN</button>
+        <button type="button" id="theme" class="small" aria-label="Theme">🌓</button>
+      </div>
+    </div>
+    <p class="lead" data-i18n="lead">Brother の P-touch CUBE に、ブラウザから Bluetooth で直接印刷します。アプリは要りません。</p>
     <p class="note" id="support"></p>
   </header>
 
   <section aria-labelledby="h-make">
-    <h2 id="h-make">1. ラベルを作る</h2>
-    <div class="tabs" role="tablist">
-      <button role="tab" id="tab-text" aria-selected="true" aria-controls="panel-text">文字</button>
-      <button role="tab" id="tab-image" aria-selected="false" aria-controls="panel-image">画像(JPEG・PNG)</button>
-    </div>
+    <h2 id="h-make" data-i18n="h-make">1. ラベルを作る</h2>
 
-    <div id="panel-text" role="tabpanel" aria-labelledby="tab-text">
-      <label for="text">文字(改行で複数行。12mm テープは 1 行がおすすめ)</label>
+    <div class="row">
+      <label><span data-i18n="model">プリンタの機種</span>
+        <select id="model">
+          <option value="PT-P300BT">PT-P300BT</option>
+          <option value="PT-P320BT">PT-P320BT</option>
+          <option value="PT-P710BT">PT-P710BT</option>
+          <option value="PT-P910BT">PT-P910BT</option>
+        </select>
+      </label>
+      <label><span data-i18n="tape">テープの幅</span>
+        <select id="tape"></select>
+      </label>
+    </div>
+    <p class="hint" id="tape-note"></p>
+
+    <fieldset class="modes">
+      <legend data-i18n="content">内容</legend>
+      <label><input type="radio" name="mode" value="text" checked> <span data-i18n="mode-text">文字</span></label>
+      <label><input type="radio" name="mode" value="image"> <span data-i18n="mode-image">画像(JPEG・PNG)</span></label>
+      <label><input type="radio" name="mode" value="combo"> <span data-i18n="mode-combo">文字 + 画像</span></label>
+    </fieldset>
+
+    <div id="panel-text">
+      <label for="text" data-i18n="text-label">文字(改行で複数行。細いテープは 1 行がおすすめ)</label>
       <textarea id="text" rows="2" placeholder="まある">まある</textarea>
       <div class="row">
-        <label>フォント
-          <select id="font">
-            <option value="'Noto Sans JP','Noto Sans CJK JP','Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic','Meiryo',sans-serif">ゴシック</option>
-            <option value="'Noto Serif JP','Noto Serif CJK JP','Hiragino Mincho ProN','Yu Mincho','MS PMincho',serif">明朝</option>
-            <option value="'Zen Maru Gothic','Hiragino Maru Gothic ProN','Yu Gothic',sans-serif">丸ゴシック(あれば)</option>
-            <option value="monospace">等幅</option>
-          </select>
+        <label><span data-i18n="font">フォント</span>
+          <select id="font"></select>
         </label>
-        <label><input type="checkbox" id="bold" checked> 太字</label>
-        <label>文字の大きさ
-          <input type="number" id="fsize" min="8" max="68" placeholder="自動">
+        <label><input type="checkbox" id="bold" checked> <span data-i18n="bold">太字</span></label>
+        <label><span data-i18n="fsize">文字の大きさ</span>
+          <input type="number" id="fsize" min="6" max="200" placeholder="自動" data-i18n-ph="fsize-ph">
         </label>
       </div>
+      <p class="hint" data-i18n="font-note">かわいいフォントは Google Fonts から読み込みます。英語のフォントは、日本語の文字だけ丸ゴシックで補います(フォントのファイルを取るだけで、ラベルの文字そのものは送られません)。読み込めないときは、ふつうのフォントで表示されます。</p>
     </div>
 
-    <div id="panel-image" role="tabpanel" aria-labelledby="tab-image" hidden>
-      <label for="file">画像ファイル(印刷は白黒になります)</label>
+    <div id="panel-image" hidden>
+      <label for="file" data-i18n="image-label">画像ファイル(印刷は白黒になります)</label>
       <input type="file" id="file" accept="image/jpeg,image/png,image/*">
       <div class="row">
-        <label>回す
-          <select id="rotate"><option value="0">しない</option><option value="90">右に 90°</option><option value="180">180°</option><option value="270">左に 90°</option></select>
+        <label><span data-i18n="rotate">回す</span>
+          <select id="rotate"><option value="0" data-i18n="rot0">しない</option><option value="90" data-i18n="rot90">右に 90°</option><option value="180" data-i18n="rot180">180°</option><option value="270" data-i18n="rot270">左に 90°</option></select>
         </label>
-        <label><input type="checkbox" id="dither" checked> 写真向け(ディザ)</label>
-        <label><input type="checkbox" id="invert"> 白黒を反転</label>
-        <label>しきい値
+        <label><input type="checkbox" id="dither" checked> <span data-i18n="dither">写真向け(ディザ)</span></label>
+        <label><input type="checkbox" id="invert"> <span data-i18n="invert">白黒を反転</span></label>
+        <label><span data-i18n="thresh">しきい値(ディザなしのとき)</span>
           <input type="range" id="thresh" min="40" max="220" value="140">
         </label>
       </div>
     </div>
 
-    <h3>仕上がりの下見</h3>
-    <div class="preview"><canvas id="preview" width="10" height="10" aria-label="ラベルの下見"></canvas></div>
+    <div id="panel-combo" hidden>
+      <div class="row">
+        <label><span data-i18n="imgpos">画像の位置</span>
+          <select id="imgpos"><option value="left" data-i18n="pos-left">文字の左</option><option value="right" data-i18n="pos-right">文字の右</option></select>
+        </label>
+        <label><span data-i18n="iconscale">画像の大きさ</span>
+          <input type="range" id="iconscale" min="20" max="100" value="100">
+        </label>
+        <label><span data-i18n="gap">すきま</span>
+          <input type="number" id="gap" min="0" max="60" value="10">
+        </label>
+      </div>
+    </div>
+
+    <h3 data-i18n="h-preview">仕上がりの下見(実寸)</h3>
+    <div class="row">
+      <label><span data-i18n="zoom">表示の大きさ</span>
+        <select id="zoom"><option value="1" data-i18n="z1">実寸</option><option value="2" data-i18n="z2">2 倍</option><option value="3" data-i18n="z3">3 倍</option></select>
+      </label>
+    </div>
+    <div class="preview"><div class="tape" id="tape-strip"><canvas id="preview" aria-label="ラベルの下見"></canvas></div></div>
     <p class="meta" id="meta">—</p>
+    <p class="hint" data-i18n="preview-hint">実寸は、画面の設定によって、少しずれることがあります。点線の内側が、印刷される範囲です。</p>
   </section>
 
   <section aria-labelledby="h-print">
-    <h2 id="h-print">2. 印刷する</h2>
+    <h2 id="h-print" data-i18n="h-print">2. 印刷する</h2>
     <div class="row">
-      <label>枚数 <input type="number" id="copies" min="1" max="20" value="1"></label>
-      <label>テープ
-        <select id="media"><option value="laminated">ラミネート(白・透明など)</option><option value="non_laminated">布・リボンなど(未確認)</option></select>
+      <label><span data-i18n="copies">枚数</span> <input type="number" id="copies" min="1" max="20" value="1"></label>
+      <label><span data-i18n="media">テープの種類</span>
+        <select id="media"><option value="laminated" data-i18n="media-lam">ラミネート(白・透明など)</option><option value="non_laminated" data-i18n="media-non">布・リボンなど(未確認)</option></select>
       </label>
     </div>
     <div class="row">
-      <button id="btn-print" class="primary">プリンタにつないで印刷</button>
-      <button id="btn-status">つなぐだけ(テープと状態を見る)</button>
+      <button id="btn-print" class="primary" data-i18n="btn-print">プリンタにつないで印刷</button>
+      <button id="btn-status" data-i18n="btn-status">つなぐだけ(テープと状態を見る)</button>
     </div>
-    <p class="hint">初回はブラウザのウィンドウにプリンタの一覧が出ます。<b>先に、パソコンの設定でペアリング</b>しておいてください(下の「はじめに」)。<b>印刷するとテープを使います。</b>最初に 1 枚で見た目を確かめてください。</p>
+    <p class="hint" data-i18n-html="print-hint">初回はブラウザのウィンドウにプリンタの一覧が出ます。<b>先に、パソコンの設定でペアリング</b>しておいてください(下の「はじめに」)。<b>印刷するとテープを使います。</b>最初に 1 枚で見た目を確かめてください。</p>
     <pre id="log" aria-live="polite"></pre>
   </section>
 
   <section aria-labelledby="h-first">
-    <h2 id="h-first">はじめに(初回だけ)</h2>
+    <h2 id="h-first" data-i18n="h-first">はじめに(初回だけ)</h2>
     <ol>
-      <li>プリンタの電源を入れる</li>
-      <li>パソコンの Bluetooth 設定で、<b>PT-P300BT〜</b> をペアリングする(Linux は <code>bluetoothctl</code> の <code>pair</code> / <code>trust</code>)</li>
-      <li>このページで「つなぐだけ」を押し、一覧からプリンタを選ぶ。テープの幅が出れば成功です</li>
+      <li data-i18n="step1">プリンタの電源を入れる</li>
+      <li data-i18n-html="step2">パソコンの Bluetooth 設定で、<b>PT-P300BT〜</b> をペアリングする(Linux は <code>bluetoothctl</code> の <code>pair</code> / <code>trust</code>)</li>
+      <li data-i18n="step3">このページで「つなぐだけ」を押し、一覧からプリンタを選ぶ。テープの幅が出れば成功です</li>
     </ol>
-    <p><b>使えるブラウザ</b>: パソコンの Chrome・Edge(Web Serial に対応したもの)。<b>Safari・Firefox・iPhone・iPad では動きません。</b>そのときは、<a href="https://github.com/RRYZ09/p-touch-cube-mcp">コマンドラインや MCP 版</a>か、Brother 公式の <a href="https://www.brother.co.jp/product/labelwriter/special/cube/about/index.aspx">P-touch CUBE のアプリ</a>をお使いください。</p>
-    <p class="hint">非公式の使い方です。自己責任でお使いください。画像はこの端末の中だけで処理され、どこにも送られません。</p>
+    <p data-i18n-html="browsers"><b>使えるブラウザ</b>: パソコンの Chrome・Edge(Web Serial に対応したもの)。<b>Safari・Firefox・iPhone・iPad では動きません。</b>そのときは、<a href="https://github.com/RRYZ09/p-touch-cube-mcp">コマンドラインや MCP 版</a>か、Brother 公式の <a href="https://www.brother.co.jp/product/labelwriter/special/cube/about/index.aspx">P-touch CUBE のアプリ</a>をお使いください。</p>
+    <p class="hint" data-i18n="unofficial">非公式の使い方です。自己責任でお使いください。画像はこの端末の中だけで処理され、どこにも送られません。</p>
   </section>
 
-  <footer><a href="https://github.com/RRYZ09/p-touch-cube-mcp">GitHub</a> ・ <a href="https://github.com/RRYZ09/p-touch-cube-mcp/issues">不具合・動作報告</a> ・ Apache-2.0</footer>
+  <footer><a href="https://github.com/RRYZ09/p-touch-cube-mcp">GitHub</a> ・ <a href="https://github.com/RRYZ09/p-touch-cube-mcp/issues" data-i18n="footer-issues">不具合・動作報告</a> ・ Apache-2.0</footer>
 </main>
 <script type="module" src="app.js"></script>
 </body>

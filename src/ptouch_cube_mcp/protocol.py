@@ -11,12 +11,24 @@
 """
 from __future__ import annotations
 
+import math
+
 from PIL import Image, ImageOps
 
 HEAD_PX = 128          # ヘッドのドット数
 HEAD_BYTES = HEAD_PX // 16 * 2  # 16
-UNPRINTABLE_PX = 30    # 12mm テープで両端に印刷されないドット数
-PRINTABLE_PX = HEAD_PX - 2 * UNPRINTABLE_PX  # 68
+
+# テープ幅(mm)ごとの、印刷できるドット数(180dpi)。
+#   12mm は PT-P300BT の実機で確認した値(両端 30 ドットずつは印刷されない = 68)。
+#   それ以外は、同じ 128 ドットのヘッドをもつ Brother の PT-P700 系のラスター命令リファレンスの値で、
+#   PT-P300BT での確認はしていない。PT-P300BT が使えるテープは 3.5〜12mm。
+#   18・24mm は PT-P710BT などの別機種向け。36mm は 128 ドットのヘッドでは印刷できない。
+TAPE_PRINTABLE_PX = {3.5: 24, 6: 32, 9: 50, 12: 68, 18: 112, 24: 128}
+TAPE_WIDTHS_MM = (3.5, 6, 9, 12, 18, 24, 36)
+VERIFIED_TAPES_MM = (12,)
+
+UNPRINTABLE_PX = 30    # 12mm テープで両端に印刷されないドット数(互換のため残す)
+PRINTABLE_PX = TAPE_PRINTABLE_PX[12]  # 68(互換のため残す)
 
 # テープ種別(ラミネート/布/リボン…)ごとの media type は、ラミネートの 0x01 を既定にする
 MEDIA_LAMINATED = 0x01
@@ -63,16 +75,26 @@ def unpackbits(data: bytes) -> bytes:
     return bytes(out)
 
 
-def label_to_columns(label: Image.Image) -> list[bytes]:
+def printable_px(tape_mm: float = 12) -> int:
+    """テープ幅(mm)で印刷できるドット数。36mm など、このヘッドで印刷できない幅は ValueError。"""
+    if tape_mm not in TAPE_PRINTABLE_PX:
+        if tape_mm in TAPE_WIDTHS_MM:
+            raise ValueError(f"{tape_mm}mm は 128 ドットのヘッドでは印刷できません(下見のみ)")
+        raise ValueError(f"tape_mm は {list(TAPE_WIDTHS_MM)} のどれか")
+    return TAPE_PRINTABLE_PX[tape_mm]
+
+
+def label_to_columns(label: Image.Image, tape_mm: float = 12) -> list[bytes]:
     """ラベル画像(白地に黒、横長)を、ヘッドに送る 16 バイトの行のリストにする。
 
     label の高さは PRINTABLE_PX 以下、幅はテープの長さ方向のドット数。
     中央に置いて 128 ドットに伸ばし、90 度回して、左右を反転する(解析記録の
     `-rotate 90 -flop` と同じ)。
     """
+    limit = printable_px(tape_mm)
     img = label.convert("L")
-    if img.height > PRINTABLE_PX:
-        img = img.resize((max(1, round(img.width * PRINTABLE_PX / img.height)), PRINTABLE_PX), Image.LANCZOS)
+    if img.height > limit:
+        img = img.resize((max(1, round(img.width * limit / img.height)), limit), Image.LANCZOS)
     canvas = Image.new("L", (img.width, HEAD_PX), 255)
     canvas.paste(img, (0, (HEAD_PX - img.height) // 2))
     mono = canvas.point(lambda v: 0 if v < 128 else 255, mode="1")
@@ -88,17 +110,18 @@ def label_to_columns(label: Image.Image) -> list[bytes]:
     return lines
 
 
-def build_job(label: Image.Image, *, tape_mm: int = 12, media: int = MEDIA_LAMINATED,
+def build_job(label: Image.Image, *, tape_mm: float = 12, media: int = MEDIA_LAMINATED,
               margin_dots: int = 28, cut: bool = False) -> bytes:
     """印刷ジョブ全体のバイト列を作る。"""
-    lines = label_to_columns(label)
+    lines = label_to_columns(label, tape_mm)
+    width_byte = math.ceil(tape_mm)  # 3.5mm は 4 と送る
     n = len(lines)
     job = bytearray()
     job += b"\x00" * 64                                   # バッファのクリア
     job += b"\x1b\x40"                                     # 初期化
     job += b"\x1b\x69\x61\x01"                             # ラスターモード(PTCBP)
     # 印刷情報: 有効フラグ 0xC4、媒体、幅(mm)、長さ 0、ライン数(4 バイト LE)、1 ページ目、0
-    job += bytes([0x1B, 0x69, 0x7A, 0xC4, media, tape_mm, 0x00]) + n.to_bytes(4, "little") + b"\x00\x00"
+    job += bytes([0x1B, 0x69, 0x7A, 0xC4, media, width_byte, 0x00]) + n.to_bytes(4, "little") + b"\x00\x00"
     job += b"\x1b\x69\x4b\x08"                             # 拡張モード(チェーン印刷なし)
     job += b"\x1b\x69\x4d" + (b"\x40" if cut else b"\x00")  # モード(オートカット)
     job += b"\x1b\x69\x64" + margin_dots.to_bytes(2, "little")  # 余白(フィード)
