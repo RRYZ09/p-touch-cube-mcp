@@ -162,3 +162,85 @@ def test_settings_export_import_validation():
     out = subprocess.run([node, str(script)], capture_output=True, text=True)
     assert out.returncode == 0, out.stderr
     assert "settings ok" in out.stdout
+
+
+def _status_frame(kind: int, errors: int = 0, tape: int = 12) -> bytes:
+    f = bytearray(32)
+    f[0], f[1], f[2], f[3] = 0x80, 0x20, 0x42, 0x30
+    f[8], f[9] = errors & 255, errors >> 8
+    f[10] = tape
+    f[18] = kind
+    return bytes(f)
+
+
+def test_extract_frames_skips_noise_and_keeps_partial():
+    done, err = _status_frame(protocol.STATUS_COMPLETED), _status_frame(protocol.STATUS_ERROR, errors=0x0004)
+    buf = b"\x00\x11\x22" + done + b"\x99" + err + _status_frame(0)[:10]
+    frames, rest = protocol.extract_frames(buf)
+    assert [protocol.parse_status(f)["status_type"] for f in frames] == [1, 2]
+    assert protocol.parse_status(frames[1])["error_bits"] == 4
+    assert len(rest) == 10                       # 途中までのステータスは、次に持ち越す
+    frames2, rest2 = protocol.extract_frames(rest + _status_frame(0)[10:])
+    assert len(frames2) == 1 and rest2 == b""    # つなげると、1 つのステータスになる
+
+
+def test_web_status_parsing_matches_python():
+    import json
+    import shutil
+    import subprocess
+    from pathlib import Path
+
+    import pytest
+
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node が無い")
+    buf = b"\x00\x11" + _status_frame(1, 0, 12) + b"\x99\x98" + _status_frame(2, 0x0004, 9) + _status_frame(6)[:7]
+    script = Path(__file__).resolve().parents[1] / "web_tests" / "status.mjs"
+    js = json.loads(subprocess.run([node, str(script)], input=buf.hex(), capture_output=True, text=True, check=True).stdout)
+    frames, rest = protocol.extract_frames(buf)
+    py = [[protocol.parse_status(f)[k] for k in ("status_type", "error_bits", "tape_mm", "phase", "notification")] for f in frames]
+    assert js["frames"] == py and js["rest"] == len(rest)
+
+
+def test_send_job_waits_for_completion_between_copies(monkeypatch):
+    """2 枚のとき、1 枚目の完了の知らせを待ってから、2 枚目を送る。"""
+    from ptouch_cube_mcp import transport
+
+    events = []
+    done = _status_frame(protocol.STATUS_COMPLETED)
+
+    class FakeSock:
+        def __init__(self):
+            self.sent = 0
+            self.pending = b""
+
+        def settimeout(self, t):
+            pass
+
+        def sendall(self, data):
+            events.append(("send", len(data)))
+            if data.endswith(b"\x1a"):
+                self.sent += 1
+                self.pending = done          # 1 枚送り終えたら、完了の知らせが来る
+
+        def recv(self, n):
+            if self.pending:
+                d, self.pending = self.pending, b""
+                events.append(("recv-done", 0))
+                return d
+            raise __import__("socket").timeout()
+
+        def close(self):
+            pass
+
+    monkeypatch.setattr(transport, "_open", lambda timeout=10.0: FakeSock())
+    monkeypatch.setattr(transport.time, "sleep", lambda s: None)
+    job = b"\x00" * 600 + b"\x1a"
+    r = transport.send_job(job, copies=2, wait_s=1)
+    assert r["ok"] is True and r["copies"] == ["completed", "completed"]
+    kinds = [e[0] for e in events]
+    first_done = kinds.index("recv-done")
+    sends_before = kinds[:first_done].count("send")
+    assert sends_before == 2          # 1 枚目(2 つに分けて送る)だけ。完了を受け取るまで、2 枚目は送らない
+    assert kinds.count("send") == 4   # そのあと 2 枚目

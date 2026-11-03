@@ -80,6 +80,9 @@ export const EN = {
   'cannot-print': '{what} cannot be printed (preview only)',
   'sending': 'Sending {copies} label(s) on {mm}mm tape…',
   'sent': 'Sent. Wait for the tape to come out',
+  'copy-done': 'Label {i}/{n}: the printer reported it finished',
+  'copy-notimer': 'Label {i}/{n}: no finish report came (waiting a little, then continuing)',
+  'copy-error': 'The printer reported an error on label {i} (code {bits}). Press its power button once, then try again.',
   'failed': 'Failed: {msg}',
 };
 export const JA_DYNAMIC = {
@@ -107,5 +110,8 @@ export const JA_DYNAMIC = {
   'cannot-print': '{what} は印刷できません(下見のみ)',
   'sending': '{mm}mm のテープに {copies} 枚を送っています…',
   'sent': '送りました。テープが出てくるのを待ってください',
+  'copy-done': '{i}/{n} 枚目: 印刷完了の知らせを受け取りました',
+  'copy-notimer': '{i}/{n} 枚目: 完了の知らせが来ませんでした(少し待って、次へ進みます)',
+  'copy-error': '{i} 枚目で、プリンタがエラーを返しました(コード {bits})。電源ボタンを 1 回押してから、もう一度試してください。',
   'failed': '失敗: {msg}',
 };

@@ -1,5 +1,5 @@
 // 設定の書き出し(JSON)と読み込みの、検証と整え。画面には触らない(tests/test_protocol.py が Node で確かめる)。
-import { MODELS } from './models.js?v=0.3.4';
+import { MODELS } from './models.js?v=0.3.5';
 
 export const SETTINGS_APP = 'p-touch-label-maker';
 export const SETTINGS_VERSION = 1;

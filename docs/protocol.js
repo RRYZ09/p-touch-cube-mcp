@@ -88,8 +88,25 @@ export function buildJob(bits, width, height, { tapeMm = 12, media = MEDIA.lamin
 
 export const STATUS_REQUEST = Uint8Array.from([0x1b, 0x69, 0x53]);
 
+export const STATUS_COMPLETED = 1;
+export const STATUS_ERROR = 2;
+
 export function parseStatus(d) {
   if (d.length < 32) return { ok: false, note: 'ステータスが短い' };
   const errors = d[8] | (d[9] << 8);
-  return { ok: errors === 0, tapeMm: d[10], mediaType: d[11], errorBits: errors };
+  return { ok: errors === 0, tapeMm: d[10], mediaType: d[11], errorBits: errors, type: d[18], phase: d[19], notification: d[22] };
+}
+
+// 受け取ったバイト列から、32 バイトのステータス(0x80 0x20 で始まる)を取り出す。src の extract_frames と同じ。
+export function extractFrames(buf) {
+  const frames = [];
+  let i = 0;
+  for (;;) {
+    let j = -1;
+    for (let k = i; k + 1 < buf.length; k++) if (buf[k] === 0x80 && buf[k + 1] === 0x20) { j = k; break; }
+    if (j < 0) return { frames, rest: buf.length && buf[buf.length - 1] === 0x80 ? buf.slice(-1) : [] };
+    if (buf.length - j < 32) return { frames, rest: buf.slice(j) };
+    frames.push(Uint8Array.from(buf.slice(j, j + 32)));
+    i = j + 32;
+  }
 }

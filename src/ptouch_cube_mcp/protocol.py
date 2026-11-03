@@ -135,6 +135,23 @@ def build_job(label: Image.Image, *, tape_mm: float = 12, media: int = MEDIA_LAM
 
 STATUS_REQUEST = b"\x1b\x69\x53"
 STATUS_LEN = 32
+# ステータスの種類(32 バイトのうち 18 バイト目)
+STATUS_REPLY, STATUS_COMPLETED, STATUS_ERROR, STATUS_NOTIFICATION, STATUS_PHASE = 0, 1, 2, 5, 6
+_STATUS_HEAD = b"\x80\x20"   # ステータスは 0x80 0x20 で始まる
+
+
+def extract_frames(buf: bytes) -> tuple[list[bytes], bytes]:
+    """受け取ったバイト列から、32 バイトのステータスを取り出す。前の余計なバイトは捨て、足りない分は rest に返す。"""
+    frames: list[bytes] = []
+    i = 0
+    while True:
+        j = buf.find(_STATUS_HEAD, i)
+        if j < 0:
+            return frames, (buf[-1:] if buf.endswith(b"\x80") else b"")
+        if len(buf) - j < STATUS_LEN:
+            return frames, buf[j:]
+        frames.append(buf[j:j + STATUS_LEN])
+        i = j + STATUS_LEN
 
 
 def parse_status(data: bytes) -> dict:
@@ -148,5 +165,7 @@ def parse_status(data: bytes) -> dict:
         "media_type": data[11],
         "error_bits": errors,
         "status_type": data[18],
+        "phase": data[19],
+        "notification": data[22],
         "raw": data.hex(),
     }
