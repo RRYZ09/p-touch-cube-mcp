@@ -37,6 +37,7 @@ uv run p-touch-cube text "テスト" --dry-run        # 下見(テープは使�
 - `mcp` は 1.x に固定しています(2.x は FastMCP が別名になり、このコードは動きません)。上げるときは、コードも直して、MCP クライアントから動かして確かめます。
 - 通信の仕様は、有志の解析にもとづいています。変えるときは、README の「仕組みのメモ」と、`protocol.py` の説明も直します。
 - **`protocol.py` を変えたら、`docs/protocol.js` も同じに直す。** 2 つが同じバイト列を作ることを、テスト(`test_web_version_builds_identical_job`)が見ています。
+- **`docs/` の JS・CSS を変えたら、`pyproject.toml` の `version` を上げ、`docs/index.html` と `docs/app.js` の `?v=` を同じ版にする**(ブラウザが古い JS を使い続けて、画面とずれるのを防ぐ。テストが見ています)。
 - README は `README.md`(日本語)と `README_EN.md`(英語)の 2 つ。片方を直したら、もう片方も直します。
 - 印刷ページの文を足すときは、日本語を `docs/index.html`(`data-i18n`)に、英語を `docs/i18n.js` に書きます。機種を足すときは `docs/models.js` に足し、`support` は実機で確かめるまで `preview` か `experimental` にします。
 - `main` に直接 push せず、ブランチと PR で変更します。

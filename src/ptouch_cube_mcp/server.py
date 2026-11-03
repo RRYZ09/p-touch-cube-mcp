@@ -11,18 +11,21 @@ mcp = FastMCP("p-touch-cube")
 @mcp.tool()
 def print_label_text(text: str, copies: int = 1, font_size: int | None = None, tape_mm: float = 12,
                      media: str = "laminated", dry_run: bool = False, font_path: str | None = None,
-                     image_path: str | None = None, image_position: str = "left", icon_scale: float = 1.0) -> dict:
+                     image_path: str | None = None, image_position: str = "left", icon_scale: float = 1.0,
+                     text_after: str | None = None) -> dict:
     """文字(と、あれば画像)をラベルにして印刷する(PT-P300BT)。改行で複数行(12mm テープは 1 行がおすすめ)。
 
     dry_run=true なら印刷せず、仕上がりの PNG だけ作る(最初は必ずこれで見る)。
     tape_mm: 3.5 / 6 / 9 / 12 / 18 / 24。PT-P300BT で使えるのは 3.5〜12。実機で確認済みなのは 12 だけ。
     media: laminated(ラミネート)/ non_laminated(布・リボンなど)。font_size 省略で高さに自動で合わせる。
-    image_path を渡すと、画像と文字を横に並べる(image_position: left / right、icon_scale: 画像の大きさ 0.2〜1)。
+    image_path を渡すと、画像と文字を横に並べる。image_position: left(画像→文字)/ right(文字→画像)/
+    both(画像→文字→画像。画像で文字を挟む)/ between(文字→画像→文字。文字で画像を挟む。後ろの文字は text_after)。
+    icon_scale: 画像の大きさ 0.2〜1。
     font_path: 好きなフォントファイル(かわいいフォントなど)。
     """
     return service.print_text(text, copies=copies, font_size=font_size, tape_mm=tape_mm, media=media,
                               dry_run=dry_run, font_path=font_path, image_path=image_path,
-                              image_position=image_position, icon_scale=icon_scale)
+                              image_position=image_position, icon_scale=icon_scale, text_after=text_after)
 
 
 @mcp.tool()
