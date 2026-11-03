@@ -35,6 +35,7 @@ Both need the printer **paired with your computer** first (step 2 below).
 | Tool | What it does |
 |---|---|
 | `print_label_text` | Prints text. Multi-line supported. Pass `image_path` to put an image beside the text (`image_position`: `left` / `right` / `both` = image on both sides / `between` = image between two texts, the second via `text_after`), `tape_mm` for the tape width (3.5–24) `font_path` for any font file, `latin_font_path` for a different font on ASCII letters/numbers only, and `segments` for a font per piece of text. `dry_run` renders a preview PNG without printing |
+| `print_label_face` | Prints a ぷち face (ぷちまる / 澪 / アン / まある / ピタ). `eye` / `mouth` / `glasses` / `sleep` change the parts; pass `text` to put text beside the face |
 | `print_label_image` | Prints a JPEG/PNG, converted to black and white and scaled to the tape width. Can rotate |
 | `printer_status` | Reads tape width, tape type and error state. Also a connection check |
 
@@ -90,6 +91,7 @@ uv run p-touch-cube text "Hello" --tape-mm 9 --image heart.png --dry-run   # 9 m
 uv run p-touch-cube text "Hello" --font ~/.fonts/Fredoka.ttf --dry-run    # any font
 uv run p-touch-cube text "Maru まある" --font ja.ttf --latin-font en.ttf --dry-run   # different fonts for Japanese and ASCII
 uv run p-touch-cube text x --segment "まある=ja.ttf" --segment "Maru=en.ttf" --dry-run   # a font per piece
+uv run p-touch-cube face まある --text Maaru --dry-run   # a ぷち face with a name
 uv run p-touch-cube image photo.jpg --dry-run
 ```
 
@@ -111,6 +113,8 @@ Edit text or load an image, watch the preview, and print.
 - **Pick the printer model** (PT-P300BT / PT-P320BT / PT-P710BT / PT-P910BT). It starts on the PT-P300BT with 12 mm tape. **Everything else is marked "(unverified)" in the lists.** The PT-P710BT is experimental; the PT-P320BT and PT-P910BT are preview only. The available tape widths follow the model.
 - **Japanese / English and light / dark** from the buttons at the top right (it starts in light mode; `?lang=ja` / `?lang=en` in the URL picks the language).
 - **Pick the tape width** (3.5 / 6 / 9 / 12 / 18 / 24 / 36 mm). The preview shows that tape at **actual size**; the dashed lines mark the printable area.
+- **Print the ぷち faces** (image source → "A ぷち face"): ぷちまる, 澪 (Mio), アン (An), まある (Maaru) and ピタ (Pita), drawn with each one's eyes, mouth and glasses. You can also pick the parts yourself or use the sleeping face. Faces always print in black, whatever their color. For 澪 only the color is known, so her eyes and mouth are placeholders.
+- **Save as an image** ("Save as image (PNG)": a black-on-white PNG at 4× the label dots).
 - **Text, image, or text + image.** Text + image has four layouts: "image → text", "text → image", "image → text → image" (image on both sides) and "text → image → text" (image between two texts), with size and gap controls.
 - **Cute fonts**: 12 Japanese and 12 English (Latin) ones. English fonts fall back to a rounded gothic for Japanese characters, so mixed text works.
 - A green top bar keeps the title, language and theme buttons in view.
@@ -140,14 +144,15 @@ Images are processed on your machine and never uploaded. Only the fonts are fetc
 | Pairing, connection (channel 2), status read (12 mm laminated) | Verified |
 | Printing Japanese text (12 mm laminated) | Verified |
 | Print page preview in Chrome (tape width, actual size, text + image, fonts) | Verified |
-| Actual printing from the print page | **Not verified** (byte-for-byte equal to the Python output, tested in CI) |
+| Printing text from the print page (12 mm) | Verified in Chrome (also byte-for-byte equal to the Python output, tested in CI) |
+| Printing the ぷち faces | **Not verified** (previews of all five are verified) |
 | Printing JPEG/PNG | **Not verified** (dot math and preview are tested) |
 | Fabric tape / ribbon (`media=non_laminated`) | **Not verified** |
 | 3.5 / 6 / 9 mm tape | **Not verified** (printable dot counts come from Brother's PT-P700-series reference; Python and JS output are tested to be byte-identical) |
 | 18 / 24 mm (other models), 36 mm (not printable) | **Not verified** / not printable |
 | Printing text + image (4 layouts) | **Not verified** (layout and preview are tested) |
 
-Reports of what works for you are very welcome, as an issue or PR.
+Reports of what works for you are very welcome, as an [issue (hardware report)](https://github.com/RRYZ09/p-touch-cube-mcp/issues/new/choose) or PR.
 
 ## How it works
 

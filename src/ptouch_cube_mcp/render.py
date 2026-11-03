@@ -106,7 +106,7 @@ def segments_label(segments: list[dict], *, font_size: int | None = None, tape_m
     return runs_label([runs], font_size=font_size, tape_mm=tape_mm)
 
 
-def image_label(path: str, *, rotate: int = 0, dither: bool = True, invert: bool = False,
+def image_label(path: "str | Image.Image", *, rotate: int = 0, dither: bool = True, invert: bool = False,
                 tape_mm: float = 12, scale: float = 1.0, pad: bool = True) -> Image.Image:
     """JPEG / PNG などを、テープ幅いっぱい(scale で小さくもできる)のラベルにする。
 
@@ -114,7 +114,7 @@ def image_label(path: str, *, rotate: int = 0, dither: bool = True, invert: bool
     """
     limit = printable_px(tape_mm)
     height = max(1, round(limit * scale))
-    img = Image.open(path)
+    img = Image.open(path) if isinstance(path, str) else path.copy()
     img = ImageOps.exif_transpose(img)
     if rotate:
         img = img.rotate(-rotate, expand=True, fillcolor="white")
@@ -134,7 +134,7 @@ def image_label(path: str, *, rotate: int = 0, dither: bool = True, invert: bool
 COMBO_LAYOUTS = ("left", "right", "both", "between")
 
 
-def combo_label(text: str, image_path: str, *, image_position: str = "left", gap: int = 10,
+def combo_label(text: str, image_path: "str | Image.Image", *, image_position: str = "left", gap: int = 10,
                 font_size: int | None = None, font_path: str | None = None, rotate: int = 0,
                 dither: bool = True, invert: bool = False, icon_scale: float = 1.0,
                 tape_mm: float = 12, text_after: str | None = None,

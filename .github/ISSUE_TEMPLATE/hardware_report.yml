@@ -1,0 +1,59 @@
+name: 動作報告 / Hardware report
+description: 実機で試した結果を教えてください(動いた・動かなかった、どちらも助かります)。 / Tell us what you tried on a real printer.
+title: "[動作報告] "
+labels: ["hardware-report"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        README の「動作確認の状況」で、未確認になっている項目を試した結果を教えてください。動いた報告も大歓迎です。
+        **プリンタの Bluetooth アドレスは、書かないでください**(公開の場所です)。
+  - type: dropdown
+    id: model
+    attributes:
+      label: プリンタの機種 / Printer model
+      options: [PT-P300BT, PT-P320BT, PT-P710BT, PT-P910BT, その他 / other]
+    validations:
+      required: true
+  - type: dropdown
+    id: tape
+    attributes:
+      label: テープの幅と種類 / Tape width and type
+      options:
+        - 12mm ラミネート
+        - 9mm ラミネート
+        - 6mm ラミネート
+        - 3.5mm ラミネート
+        - 18mm / 24mm ラミネート
+        - 布テープ / リボン
+        - その他 / other
+    validations:
+      required: true
+  - type: dropdown
+    id: how
+    attributes:
+      label: 使い方 / How you used it
+      options: [印刷ページ(ブラウザ), MCP, コマンドライン]
+    validations:
+      required: true
+  - type: input
+    id: env
+    attributes:
+      label: OS とブラウザ(または Python の版) / OS and browser (or Python)
+      placeholder: "例: Ubuntu 24.04 / Chrome 130"
+    validations:
+      required: true
+  - type: dropdown
+    id: result
+    attributes:
+      label: 結果 / Result
+      options: [きれいに印刷できた / printed fine, 印刷できたが見た目がおかしい(向き・切れ・かすれ), 印刷されない・エラー]
+    validations:
+      required: true
+  - type: textarea
+    id: detail
+    attributes:
+      label: したこと・出たもの / What you did and what happened
+      description: コマンドや操作、エラーの全文があれば貼ってください。出来上がりの写真もあると助かります。
+    validations:
+      required: true

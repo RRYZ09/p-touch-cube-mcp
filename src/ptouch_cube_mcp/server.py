@@ -47,6 +47,23 @@ def print_label_image(path: str, copies: int = 1, rotate: int = 0, dither: bool 
 
 
 @mcp.tool()
+def print_label_face(face: str = "ぷちまる", text: str | None = None, text_position: str = "right",
+                     eye: str | None = None, mouth: str | None = None, glasses: str | None = None,
+                     sleep: bool = False, copies: int = 1, tape_mm: float = 12, media: str = "laminated",
+                     dry_run: bool = False, font_path: str | None = None, icon_scale: float = 1.0) -> dict:
+    """ぷちの顔を印刷する。face: ぷちまる / 澪 / アン / まある / ピタ。顔は黒で、色に関係なく白黒で印刷する。
+
+    eye: now / round / genki / kiri / sleepy / square、mouth: heart / smile / o / line、glasses: none / round / square で、
+    その子の部品を上書きできる。sleep=true で おやすみの顔。
+    text を渡すと、顔と文字を並べる(text_position: right=顔→文字 / left=文字→顔 / both=顔で文字を挟む)。
+    澪は色しか分からず、目・口は仮の設定。dry_run=true で、印刷せず仕上がりの PNG だけ作る(最初はこれで見る)。
+    """
+    return service.print_face(face, text=text, text_position=text_position, eye=eye, mouth=mouth, glasses=glasses,
+                              sleep=sleep, copies=copies, tape_mm=tape_mm, media=media, dry_run=dry_run,
+                              font_path=font_path, icon_scale=icon_scale)
+
+
+@mcp.tool()
 def printer_status() -> dict:
     """プリンタにつないで、テープの幅・種類・エラーの有無を読む(つながるかの確認にも)。"""
     return service.status()

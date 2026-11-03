@@ -1,14 +1,16 @@
 import {
   TAPE_PRINTABLE_PX, VERIFIED_TAPES_MM, MEDIA, buildJob, STATUS_REQUEST, parseStatus,
-} from './protocol.js?v=0.3.2';
-import { MODELS, canPrint } from './models.js?v=0.3.2';
-import { EN, JA_DYNAMIC } from './i18n.js?v=0.3.2';
+} from './protocol.js?v=0.4.0';
+import { MODELS, canPrint } from './models.js?v=0.4.0';
+import { EN, JA_DYNAMIC } from './i18n.js?v=0.4.0';
+import { EYES, MOUTHS, GLASSES, SLEEPS, PRESETS, faceImage } from './faces.js?v=0.4.0';
 
 const $ = (id) => document.getElementById(id);
 const SPP = '00001101-0000-1000-8000-00805f9b34fb';
 const SIDE_PAD = 12;
 let bitmap = null; // { bits, width, height, tapeMm }
 let imageEl = null;
+let fileImg = null; // ファイルから読んだ画像(ぷちの顔に切り替えても残す)
 let lang = 'ja';
 const store = {
   get(k) { try { return localStorage.getItem(k); } catch { return null; } },
@@ -37,6 +39,8 @@ function applyLang() {
   $('support').textContent = 'serial' in navigator ? '' : T('support-no');
   $('preview').setAttribute('aria-label', lang === 'en' ? 'Label preview' : 'ラベルの下見');
   buildFontOptions();
+  buildFaceOptions();
+  faceNote();
   buildModelOptions();
   buildTapeOptions();
   applyTheme();
@@ -178,6 +182,48 @@ function segmentLines() {
   return [segs.filter((sg) => sg.text !== '').map((sg) => ({ text: sg.text, spec: fontSpec(sg.font) }))];
 }
 
+// ---- ぷちの顔(画像のもとのひとつ)
+let faceToken = 0;
+const lbl = (o) => (lang === 'en' ? o.en : o.ja);
+function fillSimple(sel, list) {
+  const cur = sel.value;
+  sel.textContent = '';
+  for (const it of list) { const o = document.createElement('option'); o.value = it.key; o.textContent = lbl(it); sel.append(o); }
+  if (cur) sel.value = cur;
+}
+function buildFaceOptions() {
+  fillSimple($('face-eye'), EYES); fillSimple($('face-mouth'), MOUTHS);
+  fillSimple($('face-glasses'), GLASSES); fillSimple($('face-sleepstyle'), SLEEPS);
+  const sel = $('face-preset');
+  const cur = sel.value || PRESETS[0].id;
+  sel.textContent = '';
+  for (const p of PRESETS) { const o = document.createElement('option'); o.value = p.id; o.textContent = p.name; sel.append(o); }
+  const c = document.createElement('option'); c.value = 'custom'; c.textContent = T('face-custom'); sel.append(c);
+  sel.value = cur;
+  if (!$('face-eye').value) applyPreset(PRESETS[0].id);
+}
+function applyPreset(id) {
+  const p = PRESETS.find((x) => x.id === id);
+  if (!p) return;
+  $('face-eye').value = p.eye; $('face-mouth').value = p.mouth; $('face-glasses').value = p.glasses; $('face-sleepstyle').value = p.sleep;
+}
+function faceNote() {
+  const p = PRESETS.find((x) => x.id === $('face-preset').value);
+  $('face-note').textContent = (p?.provisional ? T('face-prov', { name: p.name }) + ' ' : '') + T('face-black');
+}
+async function updateFace() {
+  const token = ++faceToken;
+  faceNote();
+  const img = await faceImage({
+    eye: $('face-eye').value, mouth: $('face-mouth').value, glasses: $('face-glasses').value,
+    sleep: $('face-sleep').checked, sleepStyle: $('face-sleepstyle').value,
+  });
+  if (token !== faceToken) return;
+  imageEl = img;
+  render();
+}
+const imgSrc = () => $('imgsrc').value;
+
 // ---- 対応ブラウザの確認
 if (!('serial' in navigator)) {
   $('support').dataset.on = '1';
@@ -223,6 +269,8 @@ function showPanels() {
   $('simple-wrap').hidden = segMode();
   $('seg-wrap').hidden = !segMode();
   $('panel-image').hidden = m === 'text';
+  $('file-wrap').hidden = imgSrc() === 'face';
+  $('face-wrap').hidden = imgSrc() !== 'face';
   $('panel-combo').hidden = m !== 'combo';
   $('text2-wrap').hidden = !(m === 'combo' && $('imgpos').value === 'between');
 }
@@ -379,6 +427,7 @@ async function render() {
   if (token !== renderToken) return; // 新しい入力が来たので捨てる
   drawPreview(result, mm, P);
   bitmap = result ? { ...result, tapeMm: mm } : null;
+  $('btn-save').disabled = !result;
   $('meta').textContent = result
     ? T('meta', { mm, len: (result.width / dotsPerMm()).toFixed(1), w: result.width, h: result.height, hint: hint ? ' · ' + hint : '' })
     : hint || '—';
@@ -413,6 +462,14 @@ function drawPreview(res, mm, P) {
 // ---- 入力のつなぎ
 for (const el of document.querySelectorAll('input[name=mode]')) el.addEventListener('change', () => { showPanels(); render(); });
 $('imgpos').addEventListener('input', showPanels);
+$('imgsrc').addEventListener('input', () => {
+  showPanels();
+  if (imgSrc() === 'face') updateFace(); else { imageEl = fileImg; render(); }
+});
+$('face-preset').addEventListener('input', () => { applyPreset($('face-preset').value); updateFace(); });
+for (const id of ['face-eye', 'face-mouth', 'face-glasses', 'face-sleep', 'face-sleepstyle']) {
+  $(id).addEventListener('input', () => { $('face-preset').value = 'custom'; updateFace(); });
+}
 $('model').addEventListener('input', () => { buildTapeOptions(); setPrintEnabled(); render(); });
 $('seg-mode').addEventListener('input', () => { showPanels(); render(); });
 for (const id of ['text2', 'tape', 'text', 'font', 'font-en', 'bold', 'fsize', 'rotate', 'dither', 'invert', 'thresh', 'imgpos', 'iconscale', 'gap', 'zoom']) $(id).addEventListener('input', render);
@@ -420,7 +477,7 @@ $('file').addEventListener('change', (e) => {
   const f = e.target.files[0];
   if (!f) return;
   const img = new Image();
-  img.onload = () => { imageEl = img; render(); };
+  img.onload = () => { fileImg = img; if (imgSrc() === 'file') { imageEl = img; render(); } };
   img.onerror = () => log(T('img-fail'));
   img.src = URL.createObjectURL(f);
 });
@@ -436,6 +493,28 @@ $('lang').onclick = () => setLang(lang === 'en' ? 'ja' : 'en');
 showPanels();
 applyLang();
 render();
+
+// ---- 画像として保存(ラベルのドットを 4 倍にした PNG。白地に黒)
+$('btn-save').onclick = () => {
+  if (!bitmap) { log(T('nothing-to-save')); return; }
+  const S = 4;
+  const c = document.createElement('canvas');
+  c.width = bitmap.width * S; c.height = bitmap.height * S;
+  const g = c.getContext('2d');
+  g.fillStyle = '#fff'; g.fillRect(0, 0, c.width, c.height);
+  g.fillStyle = '#000';
+  for (let y = 0; y < bitmap.height; y++) for (let x = 0; x < bitmap.width; x++) if (bitmap.bits[y * bitmap.width + x]) g.fillRect(x * S, y * S, S, S);
+  const d = new Date(), p2 = (n) => String(n).padStart(2, '0');
+  const name = `p-touch-label-${bitmap.tapeMm}mm-${d.getFullYear()}${p2(d.getMonth() + 1)}${p2(d.getDate())}-${p2(d.getHours())}${p2(d.getMinutes())}${p2(d.getSeconds())}.png`;
+  c.toBlob((blob) => {
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url; a.download = name;
+    document.body.append(a); a.click(); a.remove();
+    setTimeout(() => URL.revokeObjectURL(url), 1000);
+    log(T('saved', { name }));
+  }, 'image/png');
+};
 
 // ---- プリンタ(Web Serial の Bluetooth シリアル)
 async function pickPort() {

@@ -6,7 +6,7 @@ from pathlib import Path
 
 from PIL import Image
 
-from . import protocol, render, transport
+from . import faces, protocol, render, transport
 
 OUT_DIR = Path(__file__).resolve().parents[2] / "out"
 MEDIA = {"laminated": protocol.MEDIA_LAMINATED, "non_laminated": protocol.MEDIA_NON_LAMINATED}
@@ -67,3 +67,28 @@ def print_image(path: str, *, copies: int = 1, rotate: int = 0, dither: bool = T
 
 def status() -> dict:
     return transport.read_status()
+
+
+def print_face(face: str = "ぷちまる", *, text: str | None = None, text_position: str = "right",
+               eye: str | None = None, mouth: str | None = None, glasses: str | None = None,
+               sleep: bool = False, sleep_style: str | None = None, copies: int = 1, tape_mm: float = 12,
+               media: str = "laminated", dry_run: bool = False, cut: bool = False,
+               font_path: str | None = None, font_size: int | None = None, icon_scale: float = 1.0) -> dict:
+    """ぷちの顔を印刷する。face は ぷちまる・澪・アン・まある・ピタ(または id)。eye / mouth / glasses で部品を上書きできる。
+
+    text を渡すと、顔と文字を並べる(text_position: right=顔→文字 / left=文字→顔 / both=顔で文字を挟む)。
+    """
+    p = faces.find_preset(face) if face else faces.PRESETS[0]
+    img = faces.face_image(eye or p["eye"], mouth or p["mouth"], glasses or p["glasses"], sleep,
+                           sleep_style or p["sleep"])
+    if text:
+        pos = {"right": "left", "left": "right", "both": "both"}.get(text_position)
+        if pos is None:
+            raise ValueError("text_position は right / left / both")
+        label = render.combo_label(text, img, image_position=pos, font_size=font_size, font_path=font_path,
+                                   icon_scale=icon_scale, tape_mm=tape_mm, dither=False)
+    else:
+        label = render.image_label(img, tape_mm=tape_mm, dither=False, scale=icon_scale)
+    info = _finish(label, "face", copies=copies, tape_mm=tape_mm, media=media, dry_run=dry_run, cut=cut)
+    info["face"] = p["name"] + ("(目・口・おやすみは仮)" if p.get("provisional") and not (eye or mouth) else "")
+    return info

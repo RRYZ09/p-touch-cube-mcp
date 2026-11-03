@@ -9,7 +9,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=Kiwi+Maru:wght@400;500&family=Hachi+Maru+Pop&family=Yomogi&family=Mochiy+Pop+One&family=Potta+One&family=Dela+Gothic+One&family=RocknRoll+One&family=Yusei+Magic&family=Klee+One:wght@400;600&family=Kaisei+Decol:wght@400;700&family=Zen+Kurenaido&family=Fredoka:wght@400;600&family=Baloo+2:wght@400;700&family=Chewy&family=Pacifico&family=Caveat:wght@400;700&family=Patrick+Hand&family=Sniglet:wght@400;800&family=Bubblegum+Sans&family=Gochi+Hand&family=Lobster&family=Quicksand:wght@400;700&family=Comfortaa:wght@400;700&display=swap">
-<link rel="stylesheet" href="style.css?v=0.3.2">
+<link rel="stylesheet" href="style.css?v=0.4.0">
 <script>
 // 画面のちらつきを避けるため、テーマは描画の前に決める
 var t = 'light'; try { if (localStorage.getItem('theme') === 'dark') t = 'dark'; } catch (e) {}
@@ -81,8 +81,30 @@ document.documentElement.setAttribute('data-theme', t);
     </div>
 
     <div id="panel-image" hidden>
-      <label for="file" data-i18n="image-label">画像ファイル(印刷は白黒になります)</label>
-      <input type="file" id="file" accept="image/jpeg,image/png,image/*">
+      <div class="row">
+        <label><span data-i18n="imgsrc">画像のもと</span>
+          <select id="imgsrc"><option value="file" data-i18n="src-file">ファイル(JPEG・PNG)</option><option value="face" data-i18n="src-face">ぷちの顔</option></select>
+        </label>
+      </div>
+      <div id="file-wrap">
+        <label for="file" data-i18n="image-label">画像ファイル(印刷は白黒になります)</label>
+        <input type="file" id="file" accept="image/jpeg,image/png,image/*">
+      </div>
+      <div id="face-wrap" hidden>
+        <div class="row">
+          <label><span data-i18n="face-preset">ぷち</span>
+            <select id="face-preset"></select>
+          </label>
+          <label><span data-i18n="face-eye">目</span><select id="face-eye"></select></label>
+          <label><span data-i18n="face-mouth">口</span><select id="face-mouth"></select></label>
+          <label><span data-i18n="face-glasses">メガネ</span><select id="face-glasses"></select></label>
+        </div>
+        <div class="row">
+          <label><input type="checkbox" id="face-sleep"> <span data-i18n="face-sleep">おやすみの顔</span></label>
+          <label><span data-i18n="face-sleepstyle">おやすみの目</span><select id="face-sleepstyle"></select></label>
+        </div>
+        <p class="hint" id="face-note"></p>
+      </div>
       <div class="row">
         <label><span data-i18n="rotate">回す</span>
           <select id="rotate"><option value="0" data-i18n="rot0">しない</option><option value="90" data-i18n="rot90">右に 90°</option><option value="180" data-i18n="rot180">180°</option><option value="270" data-i18n="rot270">左に 90°</option></select>
@@ -126,6 +148,9 @@ document.documentElement.setAttribute('data-theme', t);
     </div>
     <div class="preview"><div class="tape" id="tape-strip"><canvas id="preview" aria-label="ラベルの下見"></canvas></div></div>
     <p class="meta" id="meta">—</p>
+    <div class="row">
+      <button type="button" id="btn-save" data-i18n="btn-save">画像として保存(PNG)</button>
+    </div>
     <p class="hint" data-i18n="preview-hint">実寸は、画面の設定によって、少しずれることがあります。点線の内側が、印刷される範囲です。</p>
   </section>
 
@@ -158,6 +183,6 @@ document.documentElement.setAttribute('data-theme', t);
 
   <footer><a href="https://github.com/RRYZ09/p-touch-cube-mcp">GitHub</a> ・ <a href="https://github.com/RRYZ09/p-touch-cube-mcp/issues" data-i18n="footer-issues">不具合・動作報告</a> ・ Apache-2.0</footer>
 </main>
-<script type="module" src="app.js?v=0.3.2"></script>
+<script type="module" src="app.js?v=0.4.0"></script>
 </body>
 </html>

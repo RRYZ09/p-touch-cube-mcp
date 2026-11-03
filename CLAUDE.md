@@ -15,9 +15,10 @@ Brother P-touch CUBE (PT-P300BT) に、Bluetooth(RFCOMM / SPP)でラベルを印
 | `src/ptouch_cube_mcp/render.py` | 文字・画像を、高さ 68 ドット以下の白黒ラベルにする |
 | `src/ptouch_cube_mcp/transport.py` | Bluetooth のソケットでつなぎ、送る・ステータスを読む |
 | `src/ptouch_cube_mcp/service.py` | MCP とコマンドラインの共通処理(下見の PNG を作る、印刷する) |
+| `src/ptouch_cube_mcp/faces.py` | ぷちの顔(ぷちまる・澪・アン・まある・ピタ)を黒で描く。`docs/faces.js` と同じ表(テストが見ている) |
 | `src/ptouch_cube_mcp/server.py` | MCP サーバー(FastMCP、ツールは 3 つ) |
 | `src/ptouch_cube_mcp/cli.py` | コマンド `p-touch-cube`(status / text / image) |
-| `docs/` | GitHub Pages の「P-TOUCH CUBE ラベルメーカー」(`protocol.js` は Python 版の移植、`app.js` が画面と Web Serial、`models.js` が機種表、`i18n.js` が日本語・英語の文) |
+| `docs/` | GitHub Pages の「P-TOUCH CUBE ラベルメーカー」(`protocol.js` は Python 版の移植、`app.js` が画面と Web Serial、`models.js` が機種表、`i18n.js` が日本語・英語の文、`faces.js` が顔) |
 | `web_tests/parity.mjs` | 印刷ページの JS が Python 版と同じバイト列を作るかの確認(`tests/test_protocol.py` から呼ぶ) |
 | `tests/` | プリンタなしで動くテスト |
 
@@ -47,3 +48,8 @@ uv run p-touch-cube text "テスト" --dry-run        # 下見(テープは使�
 - **新しいツールを足す:** `service.py` に処理を書き、`server.py` に `@mcp.tool()` で出します。説明文(docstring)が、そのまま AI への説明になるので、使い方と注意を書きます。
 - **テープの種類を足す:** `protocol.py` の `MEDIA_*` と、`service.py` の `MEDIA` に足します。実機で確かめたら、README の表を更新します。
 - **印刷の向きや鏡文字を直す:** `protocol.py` の `label_to_columns` です。`tests/test_protocol.py` の、向きと端のテストも合わせて直します。
+
+## Issue と PR
+
+- Issue のテンプレートは `.github/ISSUE_TEMPLATE/`(動作報告・不具合・提案)、PR は `.github/PULL_REQUEST_TEMPLATE.md`。PR の本文は、テンプレートの項目(何を変えたか・関連 Issue・確認したこと・マージ後にやること)で書きます。
+- 顔の設定(`PRESETS`)は、ぷちたちの見た目の正本ではなく、ラベル用の写しです。変えるときは、`docs/faces.js` と `src/ptouch_cube_mcp/faces.py` の両方を直します。
