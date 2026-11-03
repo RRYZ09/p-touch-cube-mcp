@@ -9,22 +9,24 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=Kiwi+Maru:wght@400;500&family=Hachi+Maru+Pop&family=Yomogi&family=Mochiy+Pop+One&family=Potta+One&family=Dela+Gothic+One&family=RocknRoll+One&family=Yusei+Magic&family=Klee+One:wght@400;600&family=Kaisei+Decol:wght@400;700&family=Zen+Kurenaido&family=Fredoka:wght@400;600&family=Baloo+2:wght@400;700&family=Chewy&family=Pacifico&family=Caveat:wght@400;700&family=Patrick+Hand&family=Sniglet:wght@400;800&family=Bubblegum+Sans&family=Gochi+Hand&family=Lobster&family=Quicksand:wght@400;700&family=Comfortaa:wght@400;700&display=swap">
-<link rel="stylesheet" href="style.css">
+<link rel="stylesheet" href="style.css?v=0.3.1">
 <script>
 // 画面のちらつきを避けるため、テーマは描画の前に決める
 try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
 </script>
 </head>
 <body>
+<div class="topbar">
+  <div class="topbar-in">
+    <h1 data-i18n="h1">P-TOUCH CUBE ラベルメーカー</h1>
+    <div class="toggles">
+      <button type="button" id="lang" class="small" aria-label="Language">EN</button>
+      <button type="button" id="theme" class="small" aria-label="Theme">🌓</button>
+    </div>
+  </div>
+</div>
 <main>
   <header>
-    <div class="topbar">
-      <h1 data-i18n="h1">P-TOUCH CUBE ラベルメーカー</h1>
-      <div class="toggles">
-        <button type="button" id="lang" class="small" aria-label="Language">EN</button>
-        <button type="button" id="theme" class="small" aria-label="Theme">🌓</button>
-      </div>
-    </div>
     <p class="lead" data-i18n="lead">Brother の P-touch CUBE に、ブラウザから Bluetooth で直接印刷します。アプリは要りません。</p>
     <p class="note" id="support"></p>
   </header>
@@ -34,12 +36,7 @@ try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') 
 
     <div class="row">
       <label><span data-i18n="model">プリンタの機種</span>
-        <select id="model">
-          <option value="PT-P300BT">PT-P300BT</option>
-          <option value="PT-P320BT">PT-P320BT</option>
-          <option value="PT-P710BT">PT-P710BT</option>
-          <option value="PT-P910BT">PT-P910BT</option>
-        </select>
+        <select id="model"></select>
       </label>
       <label><span data-i18n="tape">テープの幅</span>
         <select id="tape"></select>
@@ -85,9 +82,18 @@ try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') 
     </div>
 
     <div id="panel-combo" hidden>
+      <div id="text2-wrap" hidden>
+        <label for="text2" data-i18n="text2-label">画像のあとの文字(「文字 → 画像 → 文字」のとき)</label>
+        <textarea id="text2" rows="1" placeholder="ちゃん"></textarea>
+      </div>
       <div class="row">
-        <label><span data-i18n="imgpos">画像の位置</span>
-          <select id="imgpos"><option value="left" data-i18n="pos-left">文字の左</option><option value="right" data-i18n="pos-right">文字の右</option></select>
+        <label><span data-i18n="imgpos">並べ方</span>
+          <select id="imgpos">
+            <option value="left" data-i18n="pos-left">画像 → 文字</option>
+            <option value="right" data-i18n="pos-right">文字 → 画像</option>
+            <option value="both" data-i18n="pos-both">画像 → 文字 → 画像(画像で文字を挟む)</option>
+            <option value="between" data-i18n="pos-between">文字 → 画像 → 文字(文字で画像を挟む)</option>
+          </select>
         </label>
         <label><span data-i18n="iconscale">画像の大きさ</span>
           <input type="range" id="iconscale" min="20" max="100" value="100">
@@ -138,6 +144,6 @@ try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') 
 
   <footer><a href="https://github.com/RRYZ09/p-touch-cube-mcp">GitHub</a> ・ <a href="https://github.com/RRYZ09/p-touch-cube-mcp/issues" data-i18n="footer-issues">不具合・動作報告</a> ・ Apache-2.0</footer>
 </main>
-<script type="module" src="app.js"></script>
+<script type="module" src="app.js?v=0.3.1"></script>
 </body>
 </html>

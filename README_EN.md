@@ -34,7 +34,7 @@ Both need the printer **paired with your computer** first (step 2 below).
 
 | Tool | What it does |
 |---|---|
-| `print_label_text` | Prints text. Multi-line supported. Pass `image_path` to put an image beside the text, `tape_mm` for the tape width (3.5–24) and `font_path` for any font file. `dry_run` renders a preview PNG without printing |
+| `print_label_text` | Prints text. Multi-line supported. Pass `image_path` to put an image beside the text (`image_position`: `left` / `right` / `both` = image on both sides / `between` = image between two texts, the second via `text_after`), `tape_mm` for the tape width (3.5–24) and `font_path` for any font file. `dry_run` renders a preview PNG without printing |
 | `print_label_image` | Prints a JPEG/PNG, converted to black and white and scaled to the tape width. Can rotate |
 | `printer_status` | Reads tape width, tape type and error state. Also a connection check |
 
@@ -106,11 +106,12 @@ Restart Claude Code, then just ask for a label. Printing uses tape, so check the
 
 Edit text or load an image, watch the preview, and print.
 
-- **Pick the printer model** (PT-P300BT / PT-P320BT / PT-P710BT / PT-P910BT). Only the PT-P300BT prints today (verified on 12 mm only). The PT-P710BT is experimental (unverified); the PT-P320BT and PT-P910BT are preview only. The available tape widths follow the model.
+- **Pick the printer model** (PT-P300BT / PT-P320BT / PT-P710BT / PT-P910BT). It starts on the PT-P300BT with 12 mm tape. **Everything else is marked "(unverified)" in the lists.** The PT-P710BT is experimental; the PT-P320BT and PT-P910BT are preview only. The available tape widths follow the model.
 - **Japanese / English and light / dark** from the buttons at the top right (`?lang=ja` / `?lang=en` in the URL picks the language).
 - **Pick the tape width** (3.5 / 6 / 9 / 12 / 18 / 24 / 36 mm). The preview shows that tape at **actual size**; the dashed lines mark the printable area.
-- **Text, image, or text + image** (the image goes left or right of the text, with size and gap controls).
+- **Text, image, or text + image.** Text + image has four layouts: "image → text", "text → image", "image → text → image" (image on both sides) and "text → image → text" (image between two texts), with size and gap controls.
 - **Cute fonts**: 12 Japanese and 12 English (Latin) ones. English fonts fall back to a rounded gothic for Japanese characters, so mixed text works.
+- A fixed top bar keeps the title, language and theme buttons in view.
 - After pairing, press "connect only" and choose the printer from the browser's list.
 
 Images are processed on your machine and never uploaded. Only the fonts are fetched from Google Fonts (your label text is not sent).
@@ -141,7 +142,7 @@ Images are processed on your machine and never uploaded. Only the fonts are fetc
 | Fabric tape / ribbon (`media=non_laminated`) | **Not verified** |
 | 3.5 / 6 / 9 mm tape | **Not verified** (printable dot counts come from Brother's PT-P700-series reference; Python and JS output are tested to be byte-identical) |
 | 18 / 24 mm (other models), 36 mm (not printable) | **Not verified** / not printable |
-| Printing text + image | **Not verified** (layout and preview are tested) |
+| Printing text + image (4 layouts) | **Not verified** (layout and preview are tested) |
 
 Reports of what works for you are very welcome, as an issue or PR.
 

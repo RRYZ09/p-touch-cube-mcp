@@ -44,10 +44,12 @@ def _finish(label: Image.Image, stem: str, *, copies: int, tape_mm: float, media
 def print_text(text: str, *, copies: int = 1, font_size: int | None = None, tape_mm: float = 12,
                media: str = "laminated", dry_run: bool = False, cut: bool = False,
                font_path: str | None = None, image_path: str | None = None,
-               image_position: str = "left", icon_scale: float = 1.0) -> dict:
+               image_position: str = "left", icon_scale: float = 1.0,
+               text_after: str | None = None) -> dict:
     if image_path:
         label = render.combo_label(text, image_path, image_position=image_position, font_size=font_size,
-                                   font_path=font_path, icon_scale=icon_scale, tape_mm=tape_mm)
+                                   font_path=font_path, icon_scale=icon_scale, tape_mm=tape_mm,
+                                   text_after=text_after)
     else:
         label = render.text_label(text, font_size=font_size, font_path=font_path, tape_mm=tape_mm)
     return _finish(label, "text", copies=copies, tape_mm=tape_mm, media=media, dry_run=dry_run, cut=cut)

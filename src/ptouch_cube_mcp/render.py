@@ -77,19 +77,34 @@ def image_label(path: str, *, rotate: int = 0, dither: bool = True, invert: bool
     return out
 
 
+COMBO_LAYOUTS = ("left", "right", "both", "between")
+
+
 def combo_label(text: str, image_path: str, *, image_position: str = "left", gap: int = 10,
                 font_size: int | None = None, font_path: str | None = None, rotate: int = 0,
                 dither: bool = True, invert: bool = False, icon_scale: float = 1.0,
-                tape_mm: float = 12) -> Image.Image:
-    """画像と文字を横に並べたラベル。image_position は left / right。"""
-    if image_position not in ("left", "right"):
-        raise ValueError("image_position は left か right")
+                tape_mm: float = 12, text_after: str | None = None) -> Image.Image:
+    """画像と文字を横に並べたラベル。
+
+    image_position:
+      left    … 画像 → 文字
+      right   … 文字 → 画像
+      both    … 画像 → 文字 → 画像(画像で文字を挟む)
+      between … 文字 → 画像 → 文字(文字で画像を挟む。後ろの文字は text_after)
+    """
+    if image_position not in COMBO_LAYOUTS:
+        raise ValueError(f"image_position は {list(COMBO_LAYOUTS)} のどれか")
     limit = printable_px(tape_mm)
     t = text_label(text, font_size=font_size, font_path=font_path, tape_mm=tape_mm)
     im = image_label(image_path, rotate=rotate, dither=dither, invert=invert, tape_mm=tape_mm,
                      scale=icon_scale, pad=False)
-    first, second = (im, t) if image_position == "left" else (t, im)
-    out = Image.new("L", (first.width + gap + second.width, limit), 255)
-    out.paste(first, (0, (limit - first.height) // 2))
-    out.paste(second, (first.width + gap, (limit - second.height) // 2))
+    t2 = (text_label(text_after, font_size=font_size, font_path=font_path, tape_mm=tape_mm)
+          if image_position == "between" and text_after and text_after.strip() else None)
+    parts = {"left": [im, t], "right": [t, im], "both": [im, t, im],
+             "between": [t, im] + ([t2] if t2 else [])}[image_position]
+    out = Image.new("L", (sum(p.width for p in parts) + gap * (len(parts) - 1), limit), 255)
+    x = 0
+    for p in parts:
+        out.paste(p, (x, (limit - p.height) // 2))
+        x += p.width + gap
     return out

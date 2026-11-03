@@ -1,8 +1,8 @@
 import {
   TAPE_PRINTABLE_PX, VERIFIED_TAPES_MM, MEDIA, buildJob, STATUS_REQUEST, parseStatus,
-} from './protocol.js';
-import { MODELS, canPrint } from './models.js';
-import { EN, JA_DYNAMIC } from './i18n.js';
+} from './protocol.js?v=0.3.1';
+import { MODELS, canPrint } from './models.js?v=0.3.1';
+import { EN, JA_DYNAMIC } from './i18n.js?v=0.3.1';
 
 const $ = (id) => document.getElementById(id);
 const SPP = '00001101-0000-1000-8000-00805f9b34fb';
@@ -37,6 +37,7 @@ function applyLang() {
   $('support').textContent = 'serial' in navigator ? '' : T('support-no');
   $('preview').setAttribute('aria-label', lang === 'en' ? 'Label preview' : 'ラベルの下見');
   buildFontOptions();
+  buildModelOptions();
   buildTapeOptions();
   applyTheme();
 }
@@ -55,6 +56,8 @@ function applyTheme() {
 $('theme').onclick = () => { theme = { auto: 'light', light: 'dark', dark: 'auto' }[theme]; store.set('theme', theme); applyTheme(); };
 
 const logEl = $('log');
+window.addEventListener('error', (e) => { try { logEl.textContent += (logEl.textContent ? '\n' : '') + 'error: ' + (e.message || e); } catch { /* 表示できない */ } });
+window.addEventListener('unhandledrejection', (e) => { try { logEl.textContent += (logEl.textContent ? '\n' : '') + 'error: ' + (e.reason?.message || e.reason); } catch { /* 表示できない */ } });
 const log = (m) => { logEl.textContent += (logEl.textContent ? '\n' : '') + m; logEl.scrollTop = logEl.scrollHeight; };
 
 // ---- フォント(かわいいものは Google Fonts。bold を持たないフォントは太字にしない)
@@ -135,6 +138,18 @@ if (!('serial' in navigator)) {
 
 // ---- 設定の読み取り
 const model = () => $('model').value;
+function buildModelOptions() {
+  const sel = $('model');
+  const cur = sel.value || 'PT-P300BT';
+  sel.textContent = '';
+  for (const [name, m] of Object.entries(MODELS)) {
+    const o = document.createElement('option');
+    o.value = name;
+    o.textContent = m.support === 'verified' ? name : `${name}(${T('unverified')})`;
+    sel.append(o);
+  }
+  sel.value = cur;
+}
 const dotsPerMm = () => MODELS[model()].dpi / 25.4;
 const tapeMm = () => parseFloat($('tape').value);
 function buildTapeOptions() {
@@ -145,7 +160,8 @@ function buildTapeOptions() {
   for (const mm of tapes) {
     const o = document.createElement('option');
     o.value = mm;
-    o.textContent = `${mm}mm` + (mm === 12 && model() === 'PT-P300BT' ? (lang === 'en' ? ' (verified)' : '(確認済み)') : '');
+    const ok = mm === 12 && MODELS[model()].support === 'verified';
+    o.textContent = `${mm}mm(${T(ok ? 'verified' : 'unverified')})`;
     sel.append(o);
   }
   sel.value = tapes.includes(cur) ? String(cur) : '12';
@@ -159,6 +175,7 @@ function showPanels() {
   $('panel-text').hidden = m === 'image';
   $('panel-image').hidden = m === 'text';
   $('panel-combo').hidden = m !== 'combo';
+  $('text2-wrap').hidden = !(m === 'combo' && $('imgpos').value === 'between');
 }
 
 function tapeNote() {
@@ -200,8 +217,7 @@ function grayToBits(canvas, { dither, invert, thresh }) {
   return { bits, width: w, height: h };
 }
 
-async function textBitmap(P) {
-  const text = $('text').value;
+async function textBitmap(P, text = $('text').value) {
   if (!text.trim()) return null;
   const lines = text.split('\n');
   const n = lines.length;
@@ -289,11 +305,14 @@ async function render() {
   } else {
     const t = await textBitmap(P);
     const im = imageBitmap(P, parseInt($('iconscale').value, 10) / 100);
-    const parts = [];
+    const layout = $('imgpos').value;
+    const t2 = layout === 'between' ? await textBitmap(P, $('text2').value) : null;
     const gap = Math.max(0, parseInt($('gap').value, 10) || 0);
-    if (im && t) parts.push(...($('imgpos').value === 'left' ? [im, t] : [t, im]));
-    else if (t) parts.push(t);
-    else if (im) parts.push(im);
+    let parts = [];
+    if (im && t) {
+      parts = { left: [im, t], right: [t, im], both: [im, t, im], between: [t, im, ...(t2 ? [t2] : [])] }[layout];
+    } else if (t) parts = [t];
+    else if (im) parts = [im];
     if (parts.length) result = compose(parts, parts.length > 1 ? gap : 0, P);
     if (!im) hint = T('text-only');
     if (!t && !im) hint = T('need-either');
@@ -334,8 +353,9 @@ function drawPreview(res, mm, P) {
 
 // ---- 入力のつなぎ
 for (const el of document.querySelectorAll('input[name=mode]')) el.addEventListener('change', () => { showPanels(); render(); });
+$('imgpos').addEventListener('input', showPanels);
 $('model').addEventListener('input', () => { buildTapeOptions(); setPrintEnabled(); render(); });
-for (const id of ['tape', 'text', 'font', 'bold', 'fsize', 'rotate', 'dither', 'invert', 'thresh', 'imgpos', 'iconscale', 'gap', 'zoom']) $(id).addEventListener('input', render);
+for (const id of ['text2', 'tape', 'text', 'font', 'bold', 'fsize', 'rotate', 'dither', 'invert', 'thresh', 'imgpos', 'iconscale', 'gap', 'zoom']) $(id).addEventListener('input', render);
 $('file').addEventListener('change', (e) => {
   const f = e.target.files[0];
   if (!f) return;

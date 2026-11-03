@@ -98,3 +98,28 @@ def test_combo_label_places_icon_and_text_side_by_side(tmp_path):
 def test_text_label_for_small_tape():
     img = render.text_label("まある", tape_mm=6)
     assert img.height <= 32
+
+
+def test_combo_layouts_both_and_between(tmp_path):
+    icon = tmp_path / "i.png"
+    Image.new("RGB", (40, 40), (0, 0, 0)).save(icon)
+    one = render.combo_label("あ", str(icon), image_position="left")
+    both = render.combo_label("あ", str(icon), image_position="both")
+    assert both.width > one.width                              # 画像がもう 1 つ増える
+    assert both.getpixel((5, 34)) == 0 and both.getpixel((both.width - 5, 34)) == 0   # 両端が画像(黒)
+    between = render.combo_label("あ", str(icon), image_position="between", text_after="い")
+    solo = render.combo_label("あ", str(icon), image_position="right")
+    assert between.width > solo.width                          # 後ろの文字の分だけ広い
+
+
+def test_docs_cache_version_matches_package_version():
+    """docs/ の JS・CSS を読み込むときの ?v= が、パッケージの版と同じ(古いキャッシュを使わせないため)。"""
+    import re
+    from pathlib import Path
+
+    root = Path(__file__).resolve().parents[1]
+    version = re.search(r'^version = "([^"]+)"', (root / "pyproject.toml").read_text(), re.M).group(1)
+    found = set()
+    for f in ["index.html", "app.js"]:
+        found |= set(re.findall(r"\?v=([0-9.]+)", (root / "docs" / f).read_text()))
+    assert found == {version}, f"docs の ?v= {found} と pyproject の version {version} をそろえてください"
