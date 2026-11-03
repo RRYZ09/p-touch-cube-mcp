@@ -1,0 +1,95 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>P-touch CUBE ラベルを作って印刷</title>
+<meta name="description" content="Brother P-touch CUBE (PT-P300BT) に、ブラウザから直接ラベルを印刷します。">
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+<main>
+  <header>
+    <h1>P-touch CUBE ラベルを作って印刷</h1>
+    <p class="lead">Brother <b>PT-P300BT</b> に、ブラウザから Bluetooth で直接印刷します。アプリは要りません。</p>
+    <p class="note" id="support"></p>
+  </header>
+
+  <section aria-labelledby="h-make">
+    <h2 id="h-make">1. ラベルを作る</h2>
+    <div class="tabs" role="tablist">
+      <button role="tab" id="tab-text" aria-selected="true" aria-controls="panel-text">文字</button>
+      <button role="tab" id="tab-image" aria-selected="false" aria-controls="panel-image">画像(JPEG・PNG)</button>
+    </div>
+
+    <div id="panel-text" role="tabpanel" aria-labelledby="tab-text">
+      <label for="text">文字(改行で複数行。12mm テープは 1 行がおすすめ)</label>
+      <textarea id="text" rows="2" placeholder="まある">まある</textarea>
+      <div class="row">
+        <label>フォント
+          <select id="font">
+            <option value="'Noto Sans JP','Noto Sans CJK JP','Hiragino Kaku Gothic ProN','Hiragino Sans','Yu Gothic','Meiryo',sans-serif">ゴシック</option>
+            <option value="'Noto Serif JP','Noto Serif CJK JP','Hiragino Mincho ProN','Yu Mincho','MS PMincho',serif">明朝</option>
+            <option value="'Zen Maru Gothic','Hiragino Maru Gothic ProN','Yu Gothic',sans-serif">丸ゴシック(あれば)</option>
+            <option value="monospace">等幅</option>
+          </select>
+        </label>
+        <label><input type="checkbox" id="bold" checked> 太字</label>
+        <label>文字の大きさ
+          <input type="number" id="fsize" min="8" max="68" placeholder="自動">
+        </label>
+      </div>
+    </div>
+
+    <div id="panel-image" role="tabpanel" aria-labelledby="tab-image" hidden>
+      <label for="file">画像ファイル(印刷は白黒になります)</label>
+      <input type="file" id="file" accept="image/jpeg,image/png,image/*">
+      <div class="row">
+        <label>回す
+          <select id="rotate"><option value="0">しない</option><option value="90">右に 90°</option><option value="180">180°</option><option value="270">左に 90°</option></select>
+        </label>
+        <label><input type="checkbox" id="dither" checked> 写真向け(ディザ)</label>
+        <label><input type="checkbox" id="invert"> 白黒を反転</label>
+        <label>しきい値
+          <input type="range" id="thresh" min="40" max="220" value="140">
+        </label>
+      </div>
+    </div>
+
+    <h3>仕上がりの下見</h3>
+    <div class="preview"><canvas id="preview" width="10" height="10" aria-label="ラベルの下見"></canvas></div>
+    <p class="meta" id="meta">—</p>
+  </section>
+
+  <section aria-labelledby="h-print">
+    <h2 id="h-print">2. 印刷する</h2>
+    <div class="row">
+      <label>枚数 <input type="number" id="copies" min="1" max="20" value="1"></label>
+      <label>テープ
+        <select id="media"><option value="laminated">ラミネート(白・透明など)</option><option value="non_laminated">布・リボンなど(未確認)</option></select>
+      </label>
+    </div>
+    <div class="row">
+      <button id="btn-print" class="primary">プリンタにつないで印刷</button>
+      <button id="btn-status">つなぐだけ(テープと状態を見る)</button>
+    </div>
+    <p class="hint">初回はブラウザのウィンドウにプリンタの一覧が出ます。<b>先に、パソコンの設定でペアリング</b>しておいてください(下の「はじめに」)。<b>印刷するとテープを使います。</b>最初に 1 枚で見た目を確かめてください。</p>
+    <pre id="log" aria-live="polite"></pre>
+  </section>
+
+  <section aria-labelledby="h-first">
+    <h2 id="h-first">はじめに(初回だけ)</h2>
+    <ol>
+      <li>プリンタの電源を入れる</li>
+      <li>パソコンの Bluetooth 設定で、<b>PT-P300BT〜</b> をペアリングする(Linux は <code>bluetoothctl</code> の <code>pair</code> / <code>trust</code>)</li>
+      <li>このページで「つなぐだけ」を押し、一覧からプリンタを選ぶ。テープの幅が出れば成功です</li>
+    </ol>
+    <p><b>使えるブラウザ</b>: パソコンの Chrome・Edge(Web Serial に対応したもの)。<b>Safari・Firefox・iPhone・iPad では動きません。</b>そのときは、<a href="https://github.com/RRYZ09/p-touch-cube-mcp">コマンドラインや MCP 版</a>か、Brother 公式の <a href="https://www.brother.co.jp/product/labelwriter/special/cube/about/index.aspx">P-touch CUBE のアプリ</a>をお使いください。</p>
+    <p class="hint">非公式の使い方です。自己責任でお使いください。画像はこの端末の中だけで処理され、どこにも送られません。</p>
+  </section>
+
+  <footer><a href="https://github.com/RRYZ09/p-touch-cube-mcp">GitHub</a> ・ <a href="https://github.com/RRYZ09/p-touch-cube-mcp/issues">不具合・動作報告</a> ・ Apache-2.0</footer>
+</main>
+<script type="module" src="app.js"></script>
+</body>
+</html>

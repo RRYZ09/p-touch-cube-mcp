@@ -37,3 +37,26 @@ def test_job_structure():
 def test_text_label_fits_head():
     img = render.text_label("まある")
     assert img.height <= protocol.PRINTABLE_PX and img.width > 20
+
+
+def test_web_version_builds_identical_job():
+    """docs/protocol.js(GitHub Pages の印刷ページ)が、Python 版と同じバイト列を作る。"""
+    import shutil
+    import subprocess
+    from pathlib import Path
+
+    import pytest
+
+    node = shutil.which("node")
+    if not node:
+        pytest.skip("node が無い")
+    W, H = 40, 68
+    img = Image.new("L", (W, H), 255)
+    for y in range(H):
+        for x in range(W):
+            if (x * 3 + y * 5) % 7 < 3:
+                img.putpixel((x, y), 0)
+    expected = protocol.build_job(img).hex()
+    script = Path(__file__).resolve().parents[1] / "web_tests" / "parity.mjs"
+    got = subprocess.run([node, str(script)], capture_output=True, text=True, check=True).stdout.strip()
+    assert got == expected
