@@ -5,14 +5,15 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>P-TOUCH CUBE ラベルメーカー</title>
 <meta name="description" content="Brother P-touch CUBE に、ブラウザから直接ラベルを印刷します。 / Print labels on the Brother P-touch CUBE from your browser.">
-<meta name="color-scheme" content="light dark">
+<meta name="color-scheme" content="light">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Zen+Maru+Gothic:wght@400;700&family=Kiwi+Maru:wght@400;500&family=Hachi+Maru+Pop&family=Yomogi&family=Mochiy+Pop+One&family=Potta+One&family=Dela+Gothic+One&family=RocknRoll+One&family=Yusei+Magic&family=Klee+One:wght@400;600&family=Kaisei+Decol:wght@400;700&family=Zen+Kurenaido&family=Fredoka:wght@400;600&family=Baloo+2:wght@400;700&family=Chewy&family=Pacifico&family=Caveat:wght@400;700&family=Patrick+Hand&family=Sniglet:wght@400;800&family=Bubblegum+Sans&family=Gochi+Hand&family=Lobster&family=Quicksand:wght@400;700&family=Comfortaa:wght@400;700&display=swap">
-<link rel="stylesheet" href="style.css?v=0.3.1">
+<link rel="stylesheet" href="style.css?v=0.3.2">
 <script>
 // 画面のちらつきを避けるため、テーマは描画の前に決める
-try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') document.documentElement.setAttribute('data-theme', t); } catch (e) {}
+var t = 'light'; try { if (localStorage.getItem('theme') === 'dark') t = 'dark'; } catch (e) {}
+document.documentElement.setAttribute('data-theme', t);
 </script>
 </head>
 <body>
@@ -21,7 +22,7 @@ try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') 
     <h1 data-i18n="h1">P-TOUCH CUBE ラベルメーカー</h1>
     <div class="toggles">
       <button type="button" id="lang" class="small" aria-label="Language">EN</button>
-      <button type="button" id="theme" class="small" aria-label="Theme">🌓</button>
+      <button type="button" id="theme" class="small" aria-label="Theme">🌙</button>
     </div>
   </div>
 </div>
@@ -52,12 +53,25 @@ try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') 
     </fieldset>
 
     <div id="panel-text">
-      <label for="text" data-i18n="text-label">文字(改行で複数行。細いテープは 1 行がおすすめ)</label>
-      <textarea id="text" rows="2" placeholder="まある">まある</textarea>
+      <div id="simple-wrap">
+        <label for="text" data-i18n="text-label">文字(改行で複数行。細いテープは 1 行がおすすめ)</label>
+        <textarea id="text" rows="2" placeholder="まある">まある</textarea>
+        <div class="row">
+          <label><span data-i18n="font">日本語のフォント</span>
+            <select id="font"></select>
+          </label>
+          <label><span data-i18n="font-en">英数字のフォント</span>
+            <select id="font-en"></select>
+          </label>
+        </div>
+      </div>
+      <div id="seg-wrap" hidden>
+        <label data-i18n="seg-label">文字ごとにフォントを選ぶ(左から順につながります。1 行)</label>
+        <div id="seg-list"></div>
+        <button type="button" id="seg-add" class="small" data-i18n="seg-add">+ 文字を足す</button>
+      </div>
       <div class="row">
-        <label><span data-i18n="font">フォント</span>
-          <select id="font"></select>
-        </label>
+        <label><input type="checkbox" id="seg-mode"> <span data-i18n="seg-mode">文字ごとにフォントを選ぶ</span></label>
         <label><input type="checkbox" id="bold" checked> <span data-i18n="bold">太字</span></label>
         <label><span data-i18n="fsize">文字の大きさ</span>
           <input type="number" id="fsize" min="6" max="200" placeholder="自動" data-i18n-ph="fsize-ph">
@@ -144,6 +158,6 @@ try { var t = localStorage.getItem('theme'); if (t === 'light' || t === 'dark') 
 
   <footer><a href="https://github.com/RRYZ09/p-touch-cube-mcp">GitHub</a> ・ <a href="https://github.com/RRYZ09/p-touch-cube-mcp/issues" data-i18n="footer-issues">不具合・動作報告</a> ・ Apache-2.0</footer>
 </main>
-<script type="module" src="app.js?v=0.3.1"></script>
+<script type="module" src="app.js?v=0.3.2"></script>
 </body>
 </html>

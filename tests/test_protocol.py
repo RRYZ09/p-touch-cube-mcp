@@ -123,3 +123,25 @@ def test_docs_cache_version_matches_package_version():
     for f in ["index.html", "app.js"]:
         found |= set(re.findall(r"\?v=([0-9.]+)", (root / "docs" / f).read_text()))
     assert found == {version}, f"docs の ?v= {found} と pyproject の version {version} をそろえてください"
+
+
+def test_latin_font_is_used_only_for_ascii_runs():
+    runs = render.split_runs("Maru まある 2026", "ja.ttf", "en.ttf")
+    assert runs == [("Maru ", "en.ttf"), ("まある", "ja.ttf"), (" 2026", "en.ttf")]
+    assert render.split_runs("abc", "ja.ttf", None) == [("abc", "ja.ttf")]
+
+
+def test_mixed_and_segment_labels_fit_the_head():
+    mixed = render.text_label("Maru まある", latin_font_path=None)
+    assert mixed.height <= 68
+    seg = render.segments_label([{"text": "まある"}, {"text": "Maru"}], tape_mm=9)
+    assert seg.height <= 50 and seg.width > 20
+    import pytest
+    with pytest.raises(ValueError):
+        render.segments_label([{"text": ""}])
+
+
+def test_theme_defaults_to_light_in_docs():
+    from pathlib import Path
+    html = (Path(__file__).resolve().parents[1] / "docs" / "index.html").read_text()
+    assert "var t = 'light'" in html and "prefers-color-scheme" not in (Path(__file__).resolve().parents[1] / "docs" / "style.css").read_text()

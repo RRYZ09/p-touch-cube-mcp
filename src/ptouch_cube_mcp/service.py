@@ -45,13 +45,17 @@ def print_text(text: str, *, copies: int = 1, font_size: int | None = None, tape
                media: str = "laminated", dry_run: bool = False, cut: bool = False,
                font_path: str | None = None, image_path: str | None = None,
                image_position: str = "left", icon_scale: float = 1.0,
-               text_after: str | None = None) -> dict:
+               text_after: str | None = None, latin_font_path: str | None = None,
+               segments: list[dict] | None = None) -> dict:
     if image_path:
         label = render.combo_label(text, image_path, image_position=image_position, font_size=font_size,
                                    font_path=font_path, icon_scale=icon_scale, tape_mm=tape_mm,
-                                   text_after=text_after)
+                                   text_after=text_after, latin_font_path=latin_font_path, segments=segments)
+    elif segments:
+        label = render.segments_label(segments, font_size=font_size, tape_mm=tape_mm)
     else:
-        label = render.text_label(text, font_size=font_size, font_path=font_path, tape_mm=tape_mm)
+        label = render.text_label(text, font_size=font_size, font_path=font_path, tape_mm=tape_mm,
+                                  latin_font_path=latin_font_path)
     return _finish(label, "text", copies=copies, tape_mm=tape_mm, media=media, dry_run=dry_run, cut=cut)
 
 

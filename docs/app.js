@@ -1,8 +1,8 @@
 import {
   TAPE_PRINTABLE_PX, VERIFIED_TAPES_MM, MEDIA, buildJob, STATUS_REQUEST, parseStatus,
-} from './protocol.js?v=0.3.1';
-import { MODELS, canPrint } from './models.js?v=0.3.1';
-import { EN, JA_DYNAMIC } from './i18n.js?v=0.3.1';
+} from './protocol.js?v=0.3.2';
+import { MODELS, canPrint } from './models.js?v=0.3.2';
+import { EN, JA_DYNAMIC } from './i18n.js?v=0.3.2';
 
 const $ = (id) => document.getElementById(id);
 const SPP = '00001101-0000-1000-8000-00805f9b34fb';
@@ -43,17 +43,15 @@ function applyLang() {
 }
 function setLang(l) { lang = l; store.set('lang', l); applyLang(); render(); }
 
-// ---- テーマ(自動 / ライト / ダーク)
-let theme = 'auto';
+// ---- テーマ(ライト / ダークの 2 つ。はじめはライト。OS の設定には従わない)
+let theme = 'light';
 function applyTheme() {
-  const root = document.documentElement;
-  if (theme === 'auto') root.removeAttribute('data-theme'); else root.setAttribute('data-theme', theme);
-  const icon = { auto: '🌓', light: '☀️', dark: '🌙' }[theme];
-  $('theme').textContent = icon;
-  const label = T('theme-' + theme);
+  document.documentElement.setAttribute('data-theme', theme);
+  $('theme').textContent = theme === 'light' ? '🌙' : '☀️';
+  const label = T(theme === 'light' ? 'to-dark' : 'to-light');
   $('theme').title = label; $('theme').setAttribute('aria-label', label);
 }
-$('theme').onclick = () => { theme = { auto: 'light', light: 'dark', dark: 'auto' }[theme]; store.set('theme', theme); applyTheme(); };
+$('theme').onclick = () => { theme = theme === 'light' ? 'dark' : 'light'; store.set('theme', theme); applyTheme(); };
 
 const logEl = $('log');
 window.addEventListener('error', (e) => { try { logEl.textContent += (logEl.textContent ? '\n' : '') + 'error: ' + (e.message || e); } catch { /* 表示できない */ } });
@@ -104,10 +102,10 @@ const FONT_EN = {
   'Gochi Hand': 'Gochi Hand (doodle)', 'Noto Sans JP': 'Plain gothic', 'Noto Serif JP': 'Plain serif',
 };
 const GROUP_EN = { '日本語のかわいいフォント': 'Cute Japanese fonts', '英語のかわいいフォント(日本語は丸ゴシック)': 'Cute English fonts (Japanese in rounded gothic)', 'ふつうのフォント': 'Plain fonts' };
-function buildFontOptions() {
-  const sel = $('font');
-  const cur = sel.value || '0';
+function fillFontSelect(sel, { withSame = false } = {}) {
+  const cur = sel.value || (withSame ? 'same' : '0');
   sel.textContent = '';
+  if (withSame) { const o = document.createElement('option'); o.value = 'same'; o.textContent = T('font-same'); sel.append(o); }
   const groups = new Map();
   FONTS.forEach((f, i) => {
     if (!groups.has(f.group)) {
@@ -123,13 +121,62 @@ function buildFontOptions() {
   });
   sel.value = cur;
 }
-const fontSpec = () => {
-  const f = FONTS[parseInt($('font').value, 10)];
+function buildFontOptions() {
+  fillFontSelect($('font'));
+  fillFontSelect($('font-en'), { withSame: true });
+  buildSegments();
+}
+const fontSpec = (idx = $('font').value) => {
+  const f = FONTS[parseInt(idx, 10)];
   const weight = $('bold').checked ? f.bold : f.normal;
   const tail = f.generic || (f.latin ? `${JA_FALLBACK},sans-serif` : "'Noto Sans JP','Hiragino Sans','Yu Gothic',sans-serif");
   // 英語のフォントは、日本語の文字を丸ゴシックで補うので、補うほうも読み込む
   return { weight, family: `${f.css}, ${tail}`, first: f.css, fallback: f.latin ? "'Zen Maru Gothic'" : null };
 };
+
+// ---- 文字ごとのフォント(上級): 区切った文字それぞれにフォントを付けて、左から順につなぐ
+let segs = [{ text: 'まある', font: '0' }, { text: 'Maru', font: '12' }];
+function buildSegments() {
+  const list = $('seg-list');
+  list.textContent = '';
+  segs.forEach((sg, i) => {
+    const row = document.createElement('div'); row.className = 'seg-row';
+    const inp = document.createElement('input'); inp.type = 'text'; inp.value = sg.text; inp.placeholder = T('seg-ph');
+    inp.addEventListener('input', () => { sg.text = inp.value; render(); });
+    const sel = document.createElement('select');
+    fillFontSelect(sel); sel.value = sg.font;
+    sel.addEventListener('input', () => { sg.font = sel.value; render(); });
+    const del = document.createElement('button'); del.type = 'button'; del.textContent = '×'; del.className = 'small';
+    del.setAttribute('aria-label', 'delete'); del.disabled = segs.length <= 1;
+    del.addEventListener('click', () => { segs.splice(i, 1); buildSegments(); render(); });
+    row.append(inp, sel, del); list.append(row);
+  });
+}
+$('seg-add').onclick = () => { segs.push({ text: '', font: $('font').value }); buildSegments(); render(); };
+const segMode = () => $('seg-mode').checked;
+const mainLines = () => (segMode() ? segmentLines() : simpleLines($('text').value));
+
+// 文字の種類で分ける: 半角の英数字・記号は「英数字のフォント」、それ以外は「日本語のフォント」
+const isLatin = (ch) => ch >= ' ' && ch <= '~';
+function splitRuns(line, jaSpec, enSpec) {
+  if (enSpec === jaSpec) return [{ text: line, spec: jaSpec }];
+  const runs = [];
+  for (const ch of line) {
+    const spec = isLatin(ch) ? enSpec : jaSpec;
+    if (runs.length && runs[runs.length - 1].spec === spec) runs[runs.length - 1].text += ch;
+    else runs.push({ text: ch, spec });
+  }
+  return runs;
+}
+// 入力 → 行のリスト(行 = 文字の断片のリスト)
+function simpleLines(text) {
+  const ja = fontSpec($('font').value);
+  const en = $('font-en').value === 'same' ? ja : fontSpec($('font-en').value);
+  return text.split('\n').map((l) => splitRuns(l, ja, en));
+}
+function segmentLines() {
+  return [segs.filter((sg) => sg.text !== '').map((sg) => ({ text: sg.text, spec: fontSpec(sg.font) }))];
+}
 
 // ---- 対応ブラウザの確認
 if (!('serial' in navigator)) {
@@ -173,6 +220,8 @@ const printablePxFor = (mm) => (MODELS[model()].dpi === 180 && TAPE_PRINTABLE_PX
 function showPanels() {
   const m = modeVal();
   $('panel-text').hidden = m === 'image';
+  $('simple-wrap').hidden = segMode();
+  $('seg-wrap').hidden = !segMode();
   $('panel-image').hidden = m === 'text';
   $('panel-combo').hidden = m !== 'combo';
   $('text2-wrap').hidden = !(m === 'combo' && $('imgpos').value === 'between');
@@ -217,39 +266,49 @@ function grayToBits(canvas, { dither, invert, thresh }) {
   return { bits, width: w, height: h };
 }
 
-async function textBitmap(P, text = $('text').value) {
-  if (!text.trim()) return null;
-  const lines = text.split('\n');
+async function textBitmap(P, lines) {
+  const flat = lines.flat().filter((r) => r.text);
+  if (!flat.length) return null;
   const n = lines.length;
-  const { weight, family, first, fallback } = fontSpec();
   try {
-    await Promise.all([
-      document.fonts.load(`${weight} 40px ${first}`, text),
-      fallback ? document.fonts.load(`700 40px ${fallback}`, text) : null,
-    ]);
+    await Promise.all(flat.flatMap((r) => [
+      document.fonts.load(`${r.spec.weight} 40px ${r.spec.first}`, r.text),
+      r.spec.fallback ? document.fonts.load(`700 40px ${r.spec.fallback}`, r.text) : null,
+    ]));
   } catch { /* 読み込めなくても続ける */ }
   const probe = document.createElement('canvas').getContext('2d');
-  const metrics = (size) => {
-    probe.font = `${weight} ${size}px ${family}`;
-    const m = probe.measureText('あ');
-    const asc = m.fontBoundingBoxAscent ?? size * 0.9;
-    const desc = m.fontBoundingBoxDescent ?? size * 0.25;
+  const fontStr = (spec, size) => `${spec.weight} ${size}px ${spec.family}`;
+  // 行ごとに、使うフォントのうち一番大きい上端・下端にそろえる(ベースラインを合わせる)
+  const lineMetrics = (line, size) => {
+    let asc = 0, desc = 0;
+    for (const r of line.length ? line : [flat[0]]) {
+      probe.font = fontStr(r.spec, size);
+      const m = probe.measureText('あ');
+      asc = Math.max(asc, m.fontBoundingBoxAscent ?? size * 0.9);
+      desc = Math.max(desc, m.fontBoundingBoxDescent ?? size * 0.25);
+    }
     return { asc, lineH: Math.ceil(asc + desc) };
   };
   const manual = parseInt($('fsize').value, 10);
   let size = manual || Math.max(6, Math.floor((P / n) * 0.9));
-  let mt = metrics(size);
-  while (!manual && mt.lineH * n > P && size > 6) { size -= 1; mt = metrics(size); }
-  probe.font = `${weight} ${size}px ${family}`;
-  const maxW = Math.max(...lines.map((l) => probe.measureText(l).width));
-  const w = Math.max(1, Math.ceil(maxW) + SIDE_PAD * 2);
-  const h = Math.min(P, mt.lineH * n);
+  const all = (sz) => lines.map((l) => lineMetrics(l, sz));
+  let ms = all(size);
+  const total = (m) => m.reduce((a, x) => a + x.lineH, 0);
+  while (!manual && total(ms) > P && size > 6) { size -= 1; ms = all(size); }
+  const widthOf = (line) => line.reduce((a, r) => { probe.font = fontStr(r.spec, size); return a + probe.measureText(r.text).width; }, 0);
+  const w = Math.max(1, Math.ceil(Math.max(...lines.map(widthOf))) + SIDE_PAD * 2);
+  const h = Math.min(P, total(ms));
   const c = document.createElement('canvas');
   c.width = w; c.height = h;
   const g = c.getContext('2d');
   g.fillStyle = '#fff'; g.fillRect(0, 0, w, h);
-  g.fillStyle = '#000'; g.font = `${weight} ${size}px ${family}`; g.textBaseline = 'alphabetic';
-  lines.forEach((l, i) => g.fillText(l, SIDE_PAD, i * mt.lineH + mt.asc));
+  g.fillStyle = '#000'; g.textBaseline = 'alphabetic';
+  let y = 0;
+  lines.forEach((line, i) => {
+    let x = SIDE_PAD;
+    for (const r of line) { g.font = fontStr(r.spec, size); g.fillText(r.text, x, y + ms[i].asc); x += g.measureText(r.text).width; }
+    y += ms[i].lineH;
+  });
   return grayToBits(c, { dither: false, invert: false, thresh: 140 });
 }
 
@@ -297,16 +356,16 @@ async function render() {
   let result = null;
   let hint = '';
   if (m === 'text') {
-    const t = await textBitmap(P);
+    const t = await textBitmap(P, mainLines());
     if (t) result = t; else hint = T('need-text');
   } else if (m === 'image') {
     const im = imageBitmap(P, 1);
     if (im) result = compose([im], 0, P); else hint = T('need-image');
   } else {
-    const t = await textBitmap(P);
+    const t = await textBitmap(P, mainLines());
     const im = imageBitmap(P, parseInt($('iconscale').value, 10) / 100);
     const layout = $('imgpos').value;
-    const t2 = layout === 'between' ? await textBitmap(P, $('text2').value) : null;
+    const t2 = layout === 'between' ? await textBitmap(P, simpleLines($('text2').value)) : null;
     const gap = Math.max(0, parseInt($('gap').value, 10) || 0);
     let parts = [];
     if (im && t) {
@@ -355,7 +414,8 @@ function drawPreview(res, mm, P) {
 for (const el of document.querySelectorAll('input[name=mode]')) el.addEventListener('change', () => { showPanels(); render(); });
 $('imgpos').addEventListener('input', showPanels);
 $('model').addEventListener('input', () => { buildTapeOptions(); setPrintEnabled(); render(); });
-for (const id of ['text2', 'tape', 'text', 'font', 'bold', 'fsize', 'rotate', 'dither', 'invert', 'thresh', 'imgpos', 'iconscale', 'gap', 'zoom']) $(id).addEventListener('input', render);
+$('seg-mode').addEventListener('input', () => { showPanels(); render(); });
+for (const id of ['text2', 'tape', 'text', 'font', 'font-en', 'bold', 'fsize', 'rotate', 'dither', 'invert', 'thresh', 'imgpos', 'iconscale', 'gap', 'zoom']) $(id).addEventListener('input', render);
 $('file').addEventListener('change', (e) => {
   const f = e.target.files[0];
   if (!f) return;
@@ -371,7 +431,7 @@ $('lang').onclick = () => setLang(lang === 'en' ? 'ja' : 'en');
   const saved = store.get('lang');
   lang = q === 'en' || q === 'ja' ? q : saved || ((navigator.language || 'ja').startsWith('ja') ? 'ja' : 'en');
   const st = store.get('theme');
-  if (st === 'light' || st === 'dark') theme = st;
+  if (st === 'dark') theme = 'dark';
 }
 showPanels();
 applyLang();

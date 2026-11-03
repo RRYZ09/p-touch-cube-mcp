@@ -34,7 +34,7 @@ Both need the printer **paired with your computer** first (step 2 below).
 
 | Tool | What it does |
 |---|---|
-| `print_label_text` | Prints text. Multi-line supported. Pass `image_path` to put an image beside the text (`image_position`: `left` / `right` / `both` = image on both sides / `between` = image between two texts, the second via `text_after`), `tape_mm` for the tape width (3.5–24) and `font_path` for any font file. `dry_run` renders a preview PNG without printing |
+| `print_label_text` | Prints text. Multi-line supported. Pass `image_path` to put an image beside the text (`image_position`: `left` / `right` / `both` = image on both sides / `between` = image between two texts, the second via `text_after`), `tape_mm` for the tape width (3.5–24) `font_path` for any font file, `latin_font_path` for a different font on ASCII letters/numbers only, and `segments` for a font per piece of text. `dry_run` renders a preview PNG without printing |
 | `print_label_image` | Prints a JPEG/PNG, converted to black and white and scaled to the tape width. Can rotate |
 | `printer_status` | Reads tape width, tape type and error state. Also a connection check |
 
@@ -88,6 +88,8 @@ uv run p-touch-cube text "Hello" --dry-run   # writes a preview PNG to out/ (no 
 uv run p-touch-cube text "Hello"             # print
 uv run p-touch-cube text "Hello" --tape-mm 9 --image heart.png --dry-run   # 9 mm tape, heart + text
 uv run p-touch-cube text "Hello" --font ~/.fonts/Fredoka.ttf --dry-run    # any font
+uv run p-touch-cube text "Maru まある" --font ja.ttf --latin-font en.ttf --dry-run   # different fonts for Japanese and ASCII
+uv run p-touch-cube text x --segment "まある=ja.ttf" --segment "Maru=en.ttf" --dry-run   # a font per piece
 uv run p-touch-cube image photo.jpg --dry-run
 ```
 
@@ -107,11 +109,12 @@ Restart Claude Code, then just ask for a label. Printing uses tape, so check the
 Edit text or load an image, watch the preview, and print.
 
 - **Pick the printer model** (PT-P300BT / PT-P320BT / PT-P710BT / PT-P910BT). It starts on the PT-P300BT with 12 mm tape. **Everything else is marked "(unverified)" in the lists.** The PT-P710BT is experimental; the PT-P320BT and PT-P910BT are preview only. The available tape widths follow the model.
-- **Japanese / English and light / dark** from the buttons at the top right (`?lang=ja` / `?lang=en` in the URL picks the language).
+- **Japanese / English and light / dark** from the buttons at the top right (it starts in light mode; `?lang=ja` / `?lang=en` in the URL picks the language).
 - **Pick the tape width** (3.5 / 6 / 9 / 12 / 18 / 24 / 36 mm). The preview shows that tape at **actual size**; the dashed lines mark the printable area.
 - **Text, image, or text + image.** Text + image has four layouts: "image → text", "text → image", "image → text → image" (image on both sides) and "text → image → text" (image between two texts), with size and gap controls.
 - **Cute fonts**: 12 Japanese and 12 English (Latin) ones. English fonts fall back to a rounded gothic for Japanese characters, so mixed text works.
-- A fixed top bar keeps the title, language and theme buttons in view.
+- A green top bar keeps the title, language and theme buttons in view.
+- **Separate fonts for Japanese and for letters/numbers** (e.g. a script font for the English and a rounded gothic for the Japanese in "Maru まある"). Turn on "Pick a font for each piece of text" to split the label into pieces with a font each (joined left to right).
 - After pairing, press "connect only" and choose the printer from the browser's list.
 
 Images are processed on your machine and never uploaded. Only the fonts are fetched from Google Fonts (your label text is not sent).

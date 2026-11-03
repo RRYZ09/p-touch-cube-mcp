@@ -10,7 +10,13 @@ export const EN = {
   'mode-image': 'Image (JPEG / PNG)',
   'mode-combo': 'Text + image',
   'text-label': 'Text (line breaks make more lines; one line is best for narrow tape)',
-  'font': 'Font',
+  'font': 'Japanese font',
+  'font-en': 'Letters & numbers font',
+  'font-same': 'Same as Japanese',
+  'seg-mode': 'Pick a font for each piece of text',
+  'seg-label': 'Pick a font for each piece of text (joined left to right, one line)',
+  'seg-add': '+ Add text',
+  'seg-ph': 'Text',
   'bold': 'Bold',
   'fsize': 'Font size',
   'fsize-ph': 'auto',
@@ -46,7 +52,7 @@ export const EN = {
   'browsers': '<b>Browsers</b>: desktop Chrome or Edge (with Web Serial). <b>It does not work on Safari, Firefox, iPhone or iPad.</b> Then use the <a href="https://github.com/RRYZ09/p-touch-cube-mcp/blob/main/README_EN.md">command line / MCP version</a> or Brother\'s <a href="https://www.brother.co.jp/product/labelwriter/special/cube/about/index.aspx">official P-touch CUBE app</a>.',
   'unofficial': 'Unofficial; use at your own risk. Images are processed on this device and never uploaded.',
   'footer-issues': 'Issues / reports',
-  'theme-auto': 'Theme: auto', 'theme-light': 'Theme: light', 'theme-dark': 'Theme: dark',
+  'to-dark': 'Switch to dark mode', 'to-light': 'Switch to light mode',
   // 動的
   'support-no': 'This browser cannot print (preview only). Open the page in desktop Chrome or Edge.',
   'note-preview': '{model} is preview only: its communication details are not verified yet.',
@@ -71,7 +77,8 @@ export const EN = {
 };
 export const JA_DYNAMIC = {
   'unverified': '未検証', 'verified': '確認済み',
-  'theme-auto': 'テーマ: 自動', 'theme-light': 'テーマ: ライト', 'theme-dark': 'テーマ: ダーク',
+  'to-dark': 'ダークモードにする', 'to-light': 'ライトモードにする',
+  'font-same': '日本語と同じ', 'seg-ph': '文字',
   'support-no': 'このブラウザでは印刷できません(下見だけ使えます)。パソコンの Chrome か Edge で開いてください。',
   'note-preview': '{model} は下見のみです(通信の仕様が未確認です)。',
   'note-experimental': '{model} の印刷は実験的で、未確認です。うまく動かないかもしれません。',
